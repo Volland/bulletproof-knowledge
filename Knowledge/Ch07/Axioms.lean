@@ -37,16 +37,10 @@ example : SingleManager store := by decide
 example : UniqueIds store     := by decide
 -- ANCHOR_END: each_axiom
 
--- ANCHOR: haunted
-/-- The naive store accepts the phantom without a word. -/
+-- ANCHOR: phantom_prop
+/-- Chapter 1's naive store, with the phantom in it. -/
 def haunted : Store := store.record phantom
 
-/-- info: 3 -/
-#guard_msgs in
-#eval haunted.events.length
--- ANCHOR_END: haunted
-
--- ANCHOR: phantom_prop
 /-- A certificate of rejection: a proof that the
     phantom breaks the axioms. -/
 theorem haunted_bad : ¬ NoBilocation haunted := by
@@ -56,6 +50,11 @@ theorem haunted_bad : ¬ NoBilocation haunted := by
 #guard_msgs in
 #eval diagnose haunted
 -- ANCHOR_END: phantom_prop
+
+-- The naive store took the phantom without a word.
+/-- info: 3 -/
+#guard_msgs in
+#eval haunted.events.length
 
 /--
 error: Tactic `decide` proved that the proposition

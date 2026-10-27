@@ -99,14 +99,6 @@ def fromUser : Claim :=
 #guard_msgs in
 #eval store.events.map (·.id)
 
-/-- info: [Memory.Person.anna, Memory.Person.marco] -/
-#guard_msgs in
-#eval kickoff.who
-
-/-- info: true -/
-#guard_msgs in
-#eval kickoff.who.contains .marco
-
 /-- info: [1] -/
 #guard_msgs in
 #eval (store.events.filter

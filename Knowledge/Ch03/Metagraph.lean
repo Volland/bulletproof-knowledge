@@ -147,9 +147,10 @@ def MElem.occursIn (x : MElem) : MElem → Bool
 -- ANCHOR_END: occurs
 
 -- ANCHOR: holds
-/-- An element holds if it is asserted, or sits
-    inside the subgraph of an asserted metavertex.
-    Being *mentioned* by an edge is not enough. -/
+/-- An element holds if it is asserted, or is one of
+    the inner elements of an asserted metavertex (one
+    level down). Being *mentioned* by an edge is not
+    enough. -/
 def holds (m : Metagraph) (x : MElem) : Bool :=
   m.any fun y => y == x || y.unfold.contains x
 
@@ -181,8 +182,9 @@ def sources (m : Metagraph) (x : MElem) :
 -- ANCHOR: context
 /-- In which recorded events does `x` occur? -/
 def contexts (m : Metagraph) (x : MElem) : List Atom :=
-  m.flatMap fun
-    | y@(.vertex n _) => if x.occursIn y then [n] else []
+  m.flatMap fun y =>
+    match y with
+    | .vertex n _ => if x.occursIn y then [n] else []
     | _ => []
 
 /-- info: [Ch03.Atom.event 2, Ch03.Atom.event 1] -/

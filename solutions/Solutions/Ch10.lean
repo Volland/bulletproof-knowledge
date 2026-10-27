@@ -103,28 +103,4 @@ def colleaguesChecked (p : Person) : MetaM (List Person) := do
 example : Colleague store .anna .sofia := by decide
 example : ¬ Colleague store .anna .lena := by decide
 
-/-! ## Exercise 10.5: irreflexive `before` -/
-
-elpi_accumulate sol lp%{
-  constraint earlier {
-    rule (earlier X X) <=> fail.
-    rule (earlier X Y) (earlier Y X) <=> fail.
-    rule (earlier X Y) (earlier Y Z) <=> (earlier X Z).
-  }
-  pred earlier o:int, o:int.
-  earlier A B :- var A, !,
-    declare_constraint (earlier A B) [A].
-  earlier A B :- var B, !,
-    declare_constraint (earlier A B) [B].
-  earlier A B :- A < B.
-}%
-
-/-- error: query has no solution -/
-#guard_msgs in
-#elpi sol lp%{ earlier K K }%
-
-/-- error: query has no solution -/
-#guard_msgs in
-#elpi sol lp%{ earlier K R, earlier R K }%
-
 end Solutions.Ch10

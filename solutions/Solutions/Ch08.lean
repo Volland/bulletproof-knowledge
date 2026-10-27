@@ -86,7 +86,7 @@ theorem taras_not_in_ukraine :
 /-! ## Exercise 8.5 — classifying calls -/
 
 open Taxonomy in
-def callOfEvent? (e : Event) : Option Call :=
+def callOfEvent? (e : Event) : Option CallR :=
   if h₁ : e.kind = .call then
     if h₂ : 2 ≤ e.who.length then some ⟨e, h₁, h₂⟩
     else none
@@ -98,7 +98,7 @@ def callOfEvent? (e : Event) : Option Call :=
        (callOfEvent? kickoff).isSome)
 
 /-- The review as a certified call ... -/
-def reviewCall : Taxonomy.Call := ⟨review, rfl, by decide⟩
+def reviewCall : Taxonomy.CallR := ⟨review, rfl, by decide⟩
 
 /-- ... inherits the shared theorem: someone was there. -/
 example : ∃ p, p ∈ review.who :=

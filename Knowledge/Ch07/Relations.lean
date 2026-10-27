@@ -102,31 +102,31 @@ example : ¬ Colleagues store .anna .taras := by decide
 example : ¬ Colleagues store .anna .anna := by decide
 -- ANCHOR_END: colleagues_facts
 
--- ANCHOR: above
-/-- `Above s p q`: `q` is somewhere above `p` in the
+-- ANCHOR: under
+/-- `Under s p q`: `p` is somewhere under `q` in the
     reporting chain. Defined by rules, not by a list. -/
-inductive Above (s : Store) : Person → Person → Prop
+inductive Under (s : Store) : Person → Person → Prop
   | direct {p q : Person} :
-      (p, q) ∈ s.reportsTo → Above s p q
+      (p, q) ∈ s.reportsTo → Under s p q
   | step {p q r : Person} :
-      (p, q) ∈ s.reportsTo → Above s q r → Above s p r
--- ANCHOR_END: above
+      (p, q) ∈ s.reportsTo → Under s q r → Under s p r
+-- ANCHOR_END: under
 
--- ANCHOR: above_proof
+-- ANCHOR: under_proof
 /-- A proof built from the rules by hand. -/
-example : Above store .marco .anna :=
+example : Under store .marco .anna :=
   .direct (by decide)
--- ANCHOR_END: above_proof
+-- ANCHOR_END: under_proof
 
 /--
 error: failed to synthesize
-  Decidable (Above store Person.marco Person.anna)
+  Decidable (Under store Person.marco Person.anna)
 
 Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
 -/
 #guard_msgs in
--- ANCHOR: above_decide
-example : Above store .marco .anna := by decide
--- ANCHOR_END: above_decide
+-- ANCHOR: under_decide
+example : Under store .marco .anna := by decide
+-- ANCHOR_END: under_decide
 
 end Ch07

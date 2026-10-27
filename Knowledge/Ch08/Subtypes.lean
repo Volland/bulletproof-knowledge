@@ -3,7 +3,7 @@ import Knowledge.Memory
 /-!
 # Chapter 8 — Subtypes and coercions
 
-A subclass as a subtype: a `Meeting` is an `Event` plus
+A subclass as a subtype: a `MeetingEv` is an `Event` plus
 a proof that its kind is `.meeting`. A coercion lets a
 meeting go wherever an event is expected.
 -/
@@ -16,10 +16,10 @@ open Memory Memory.World
 /-- The class of meetings: events whose kind is
     `.meeting`. A value carries the event *and* a
     proof that it is a meeting. -/
-def Meeting := { e : Event // e.kind = .meeting }
+def MeetingEv := { e : Event // e.kind = .meeting }
 
 /-- The kickoff is a meeting; `rfl` is the proof. -/
-def kickoffM : Meeting := ⟨kickoff, rfl⟩
+def kickoffM : MeetingEv := ⟨kickoff, rfl⟩
 -- ANCHOR_END: meeting
 
 -- ANCHOR: not-a-meeting
@@ -29,7 +29,7 @@ error: Tactic `decide` proved that the proposition
 is false
 -/
 #guard_msgs in
-example : Meeting := ⟨review, by decide⟩
+example : MeetingEv := ⟨review, by decide⟩
 -- ANCHOR_END: not-a-meeting
 
 -- ANCHOR: placeOf
@@ -42,7 +42,7 @@ def placeOf (e : Event) : City := e.place
 error: Application type mismatch: The argument
   kickoffM
 has type
-  Meeting
+  MeetingEv
 but is expected to have type
   Event
 in the application
@@ -54,7 +54,7 @@ in the application
 
 -- ANCHOR: coe
 /-- Every meeting is an event: forget the proof. -/
-instance : Coe Meeting Event := ⟨Subtype.val⟩
+instance : Coe MeetingEv Event := ⟨Subtype.val⟩
 
 /-- info: Memory.City.lisbon -/
 #guard_msgs in
@@ -68,7 +68,7 @@ instance : Coe Meeting Event := ⟨Subtype.val⟩
 -- ANCHOR: embedding
 /-- The coercion loses nothing: two meetings with the
     same underlying event are the same meeting. -/
-theorem Meeting.ext {a b : Meeting}
+theorem MeetingEv.ext {a b : MeetingEv}
     (h : (a : Event) = b) : a = b :=
   Subtype.ext h
 -- ANCHOR_END: embedding
@@ -76,7 +76,7 @@ theorem Meeting.ext {a b : Meeting}
 -- ANCHOR: inherit
 /-- A fact about the subclass, proven once:
     every meeting requires physical presence. -/
-theorem Meeting.physical (m : Meeting) :
+theorem MeetingEv.physical (m : MeetingEv) :
     (m : Event).kind.physical = true := by
   show m.val.kind.physical = true
   rw [m.property]
@@ -86,26 +86,26 @@ theorem Meeting.physical (m : Meeting) :
 -- ANCHOR: smart
 /-- Classify an untrusted event. The proof `h` from
     the `if` becomes the membership certificate. -/
-def Meeting.ofEvent? (e : Event) : Option Meeting :=
+def MeetingEv.ofEvent? (e : Event) : Option MeetingEv :=
   if h : e.kind = .meeting then some ⟨e, h⟩
   else none
 
 /-- info: (some 1, none) -/
 #guard_msgs in
-#eval ((Meeting.ofEvent? kickoff).map (·.val.id),
-       (Meeting.ofEvent? review).map (·.val.id))
+#eval ((MeetingEv.ofEvent? kickoff).map (·.val.id),
+       (MeetingEv.ofEvent? review).map (·.val.id))
 -- ANCHOR_END: smart
 
 -- ANCHOR: chain
 /-- A subclass of a subclass: meetings in Lisbon. -/
 def LisbonMeeting :=
-  { m : Meeting // (m : Event).place = .lisbon }
+  { m : MeetingEv // (m : Event).place = .lisbon }
 
-instance : Coe LisbonMeeting Meeting := ⟨Subtype.val⟩
+instance : Coe LisbonMeeting MeetingEv := ⟨Subtype.val⟩
 
 def kickoffL : LisbonMeeting := ⟨kickoffM, rfl⟩
 
--- Two coercions chain: LisbonMeeting → Meeting → Event.
+-- Two coercions chain: LisbonMeeting → MeetingEv → Event.
 /-- info: [Memory.Person.anna, Memory.Person.marco] -/
 #guard_msgs in
 #eval (kickoffL : Event).who

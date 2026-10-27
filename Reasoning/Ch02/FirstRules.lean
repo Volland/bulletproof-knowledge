@@ -81,10 +81,6 @@ error: kickoff has type event but is used with type person
 
 -- ANCHOR: rules
 elpi_accumulate team lp%{
-  pred above o:person, o:person.
-  above P M :- reports P M.
-  above P N :- reports P M, above M N.
-
   pred team_at i:person, i:event.
   team_at M E :- not (reports P M, not (attended E P)).
 }%
@@ -100,12 +96,20 @@ elpi_accumulate team lp%{
 #elpi team lp%{ team_at anna review }%
 -- ANCHOR_END: team_at
 
--- ANCHOR: above
+-- ANCHOR: closure
+elpi_accumulate team lp%{
+  pred closure i:(A -> A -> prop), o:A, o:A.
+  closure R X Y :- R X Y.
+  closure R X Z :- R X Y, closure R Y Z.
+}%
+-- ANCHOR_END: closure
+
+-- ANCHOR: chain_query
 /-- info: X = anna -/
 #guard_msgs in
 set_option elpi.solutions 5 in
-#elpi team lp%{ above marco X }%
--- ANCHOR_END: above
+#elpi team lp%{ closure reports marco X }%
+-- ANCHOR_END: chain_query
 
 -- ANCHOR: assume
 /--
@@ -115,35 +119,19 @@ info: X = sofia
 -/
 #guard_msgs in
 set_option elpi.solutions 5 in
-#elpi team lp%{ reports anna sofia => above marco X }%
+#elpi team lp%{
+  reports anna sofia => closure reports marco X }%
 
 /-- error: query has no solution -/
 #guard_msgs in
-#elpi team lp%{ above marco sofia }%
+#elpi team lp%{ closure reports marco sofia }%
 -- ANCHOR_END: assume
 
 -- ANCHOR: pi
 /-- info: true -/
 #guard_msgs in
-#elpi team lp%{ pi p\ reports p anna => above p anna }%
--- ANCHOR_END: pi
-
--- ANCHOR: closure
-elpi_accumulate team lp%{
-  pred closure i:(A -> A -> prop), o:A, o:A.
-  closure R X Y :- R X Y.
-  closure R X Z :- R X Y, closure R Y Z.
-}%
-
-/--
-info: X = anna
----
-info: X = sofia
--/
-#guard_msgs in
-set_option elpi.solutions 5 in
 #elpi team lp%{
-  reports anna sofia => closure reports marco X }%
--- ANCHOR_END: closure
+  pi p\ reports p anna => closure reports p anna }%
+-- ANCHOR_END: pi
 
 end Ch02

@@ -116,11 +116,11 @@ elpi_accumulate ch11_ho lp%{
   % properties of relations, stated as facts
   pred transitive o:(person -> person -> prop).
   pred symmetric  o:(person -> person -> prop).
-  transitive reports-above.
+  transitive under.
   symmetric met. symmetric spoke. symmetric contact.
 
-  pred reports-above o:person, o:person.
-  reports-above X Y :- closure reports X Y.
+  pred under o:person, o:person.
+  under X Y :- closure reports X Y.
 
   % one generic rule that uses them
   pred holds i:(person -> person -> prop),
@@ -156,7 +156,7 @@ elpi_accumulate ch11_ho lp%{
 
 /-- error: query has no solution -/
 #guard_msgs in
-#elpi ch11_ho lp%{ not-transitive reports-above X Y Z }%
+#elpi ch11_ho lp%{ not-transitive under X Y Z }%
 -- ANCHOR_END: check_property
 
 /-! ## λ-terms: binders as data -/

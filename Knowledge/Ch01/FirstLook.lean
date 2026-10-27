@@ -82,8 +82,8 @@ event 4: rejected, Memory.Violation.bornBefore
 event 1: rejected, Memory.Violation.uniqueIds
 -/
 #guard_msgs in
-#eval for e in proposals do
-  IO.println (verdict memory e)
+#eval IO.println
+  ("\n".intercalate (proposals.map (verdict memory)))
 -- ANCHOR_END: run
 
 -- ANCHOR: answer

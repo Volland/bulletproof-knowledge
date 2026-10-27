@@ -28,12 +28,14 @@ structure Provider where
 -- ANCHOR_END: provider
 
 -- ANCHOR: request
-def model    : String := "claude-sonnet-5-5"
+/-- Used when `ANTHROPIC_MODEL` is not set. -/
+def defaultModel : String := "claude-sonnet-5-5"
 def endpoint : String :=
   "https://api.anthropic.com/v1/messages"
 
 /-- The body of a Messages API request. -/
-def requestBody (system : String) (msgs : List Msg) : Json :=
+def requestBody (model system : String) (msgs : List Msg) :
+    Json :=
   Json.mkObj [
     ("model", toJson model),
     ("max_tokens", toJson (4096 : Nat)),
@@ -81,39 +83,65 @@ def sample : String :=
 -- ANCHOR_END: response_demo
 
 -- ANCHOR: curl
-/-- POST a body with `curl`. The API key travels on curl's
-    standard input (`-H @-`), so it never appears in the
-    process list. -/
+/-- POST a body with `curl`; return the HTTP status and the
+    response text. The API key travels on curl's standard
+    input (`-H @-`), so it never appears in the process
+    list. The body goes through a private temporary file,
+    so its size and its content stay off the command line. -/
 def post (key body : String) (url := endpoint) :
-    IO String := do
-  let child ← IO.Process.spawn {
-    cmd := "curl"
-    args := #["-sS", "--max-time", "120", url,
-      "-H", "content-type: application/json",
-      "-H", "anthropic-version: 2023-06-01",
-      "-H", "@-", "--data-binary", body]
-    stdin := .piped, stdout := .piped, stderr := .piped }
-  let (stdin, child) ← child.takeStdin
-  stdin.putStr s!"x-api-key: {key}\n"
-  stdin.flush
-  let out ← child.stdout.readToEnd
-  let err ← child.stderr.readToEnd
-  let code ← child.wait
-  if code != 0 then
-    throw (IO.userError s!"curl failed ({code}): {err}")
-  return out
+    IO (Nat × String) := do
+  let (h, path) ← IO.FS.createTempFile
+  h.putStr body; h.flush
+  try
+    let child ← IO.Process.spawn {
+      cmd := "curl"
+      args := #["-sS", "--max-time", "120", url,
+        "-H", "content-type: application/json",
+        "-H", "anthropic-version: 2023-06-01",
+        "-H", "@-", "--data-binary", s!"@{path}",
+        "-w", "\n%{http_code}"]
+      stdin := .piped, stdout := .piped, stderr := .piped }
+    let (stdin, child) ← child.takeStdin
+    stdin.putStr s!"x-api-key: {key}\n"
+    stdin.flush
+    let out ← child.stdout.readToEnd
+    let err ← child.stderr.readToEnd
+    if (← child.wait) != 0 then
+      throw (IO.userError s!"curl failed: {err}")
+    -- `-w` appended the HTTP status as the last line
+    let lines := out.splitOn "\n"
+    let code := (lines.getLastD "").toNat?.getD 0
+    return (code, "\n".intercalate lines.dropLast)
+  finally
+    IO.FS.removeFile path
 -- ANCHOR_END: curl
 
 -- ANCHOR: live
-/-- The real model. Needs `ANTHROPIC_API_KEY`. -/
+/-- Retry while the API answers 429 (rate limited) or 529
+    (overloaded), doubling the wait each time. -/
+def postRetry (key body : String) :
+    (tries waitMs : Nat) → IO String
+  | 0, _ => return (← post key body).2
+  | n + 1, ms => do
+    let (code, out) ← post key body
+    if code != 429 && code != 529 then return out
+    IO.sleep ms.toUInt32
+    postRetry key body n (2 * ms)
+
+/-- The real model. Needs `ANTHROPIC_API_KEY`; the model id
+    comes from `ANTHROPIC_MODEL` when it is set. -/
 def live : IO Provider := do
   let some key ← IO.getEnv "ANTHROPIC_API_KEY"
     | throw (IO.userError "set ANTHROPIC_API_KEY for --live")
+  let model := (← IO.getEnv "ANTHROPIC_MODEL").getD
+    defaultModel
   return {
     name := s!"live ({model})"
     complete := fun system msgs => do
-      let raw ← post key (requestBody system msgs).compress
-      return replyText raw }
+      let body := (requestBody model system msgs).compress
+      -- a failed transport is a value too, not a crash
+      try return replyText (← postRetry key body 3 1000)
+      catch e => return .error (toString e) }
 -- ANCHOR_END: live
 
 -- ANCHOR: replay

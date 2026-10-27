@@ -1,4 +1,8 @@
+-- ANCHOR: header
 import Knowledge.Memory
+open Memory Memory.World
+namespace Ch06
+-- ANCHOR_END: header
 
 /-!
 # Chapter 6 — Values, types and functions
@@ -6,10 +10,6 @@ import Knowledge.Memory
 The first contact with Lean: evaluating expressions, asking
 for types, and defining functions over the agent's memory.
 -/
-
-namespace Ch06
-
-open Memory Memory.World
 
 -- ANCHOR: hook
 /-- The kickoff ends after it starts.

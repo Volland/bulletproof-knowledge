@@ -267,8 +267,11 @@ def attempt (llm : Provider) (r : Reasoner) (m : Certified)
     say "agent" "I could not record that. Memory unchanged."
     return ⟨m, verdicts ++ ["gave up"], []⟩
   | fuel + 1, msgs => do
-    let .ok reply ← llm.complete (systemPrompt m.store) msgs
-      | say "agent" "The model is unavailable."
+    let reply ← match ← llm.complete (systemPrompt m.store) msgs
+      with
+      | .ok reply => pure reply
+      | .error e =>
+        say "agent" s!"The model is unavailable: {e}"
         return ⟨m, verdicts ++ ["no reply"], []⟩
     let retry (verdict reason : String) := do
       say "check" reason

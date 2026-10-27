@@ -136,35 +136,49 @@ def Place.ancestors : Place → List Place
   | .country k => [.region (regionOf k)]
   | .region _  => []
 
-/-- The function and the relation agree. -/
-theorem partOf_iff {a b : Place} :
-    PartOf a b ↔ b ∈ a.ancestors := by
-  constructor
-  · intro h
-    induction h with
-    | direct d => cases d <;> simp [Place.ancestors]
-    | step d _ ih =>
-      cases d with
-      | city c =>
-        simp [Place.ancestors] at ih ⊢
-        exact Or.inr ih
-      | country k => simp [Place.ancestors] at ih
-  · intro h
-    cases a with
-    | city c =>
-      simp [Place.ancestors] at h
-      rcases h with rfl | rfl
-      · exact .direct (.city c)
-      · exact .step (.city c) (.direct (.country _))
-    | country k =>
-      simp [Place.ancestors] at h
-      subst h
-      exact .direct (.country k)
-    | region r => simp [Place.ancestors] at h
+-- ANCHOR_END: ancestors
 
+-- ANCHOR: to-list
+/-- From a path to list membership. -/
+theorem PartOf.mem_ancestors {a b : Place}
+    (h : PartOf a b) : b ∈ a.ancestors := by
+  induction h with
+  | direct d => cases d <;> simp [Place.ancestors]
+  | step d _ ih =>
+    cases d with
+    | city c =>
+      simp [Place.ancestors] at ih ⊢
+      exact Or.inr ih
+    | country k => simp [Place.ancestors] at ih
+-- ANCHOR_END: to-list
+
+-- ANCHOR: from-list
+/-- From list membership to a path. -/
+theorem PartOf.of_mem_ancestors {a b : Place}
+    (h : b ∈ a.ancestors) : PartOf a b := by
+  cases a with
+  | city c =>
+    simp [Place.ancestors] at h
+    rcases h with rfl | rfl
+    · exact .direct (.city c)
+    · exact .step (.city c) (.direct (.country _))
+  | country k =>
+    simp [Place.ancestors] at h
+    subst h
+    exact .direct (.country k)
+  | region r => simp [Place.ancestors] at h
+-- ANCHOR_END: from-list
+
+-- ANCHOR: partof-decidable
+/-- The function and the relation agree ... -/
+theorem partOf_iff {a b : Place} :
+    PartOf a b ↔ b ∈ a.ancestors :=
+  ⟨PartOf.mem_ancestors, PartOf.of_mem_ancestors⟩
+
+/-- ... so list membership decides parthood. -/
 instance (a b : Place) : Decidable (PartOf a b) :=
   decidable_of_iff _ partOf_iff.symm
--- ANCHOR_END: ancestors
+-- ANCHOR_END: partof-decidable
 
 -- ANCHOR: decide
 example : PartOf (.city .porto) (.region .iberia) := by

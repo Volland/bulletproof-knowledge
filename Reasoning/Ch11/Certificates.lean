@@ -24,22 +24,22 @@ lf_signature chain "chain.elpi"
 -- ANCHOR_END: signature
 
 -- ANCHOR: query
-/-- info: proof: above_one marco anna r_marco -/
+/-- info: proof: under_one marco anna r_marco -/
 #guard_msgs in
-#lf_query chain lp%{ above marco anna }%
+#lf_query chain lp%{ under marco anna }%
 -- ANCHOR_END: query
 
-/-- info: proof: above_step marco lena anna (above_one anna lena r_anna) r_marco -/
+/-- info: proof: under_step marco lena anna (under_one anna lena r_anna) r_marco -/
 #guard_msgs in
 -- ANCHOR: query2
-#lf_query chain lp%{ above marco lena }%
+#lf_query chain lp%{ under marco lena }%
 -- ANCHOR_END: query2
 
 -- ANCHOR: query_open
 /-- info: B = anna
-proof: above_one marco anna r_marco -/
+proof: under_one marco anna r_marco -/
 #guard_msgs in
-#lf_query chain lp%{ above marco B }%
+#lf_query chain lp%{ under marco B }%
 -- ANCHOR_END: query_open
 
 /-! ## Export to Lean -/
@@ -49,44 +49,44 @@ lf_export chain
 -- ANCHOR_END: export
 
 /--
-info: inductive Chain.Above : Chain.Person → Chain.Person → Prop
+info: inductive Chain.Under : Chain.Person → Chain.Person → Prop
 number of parameters: 0
 constructors:
-Chain.Above.above_one : ∀ {X Y : Chain.Person}, Chain.Reports X Y → Chain.Above X Y
-Chain.Above.above_step : ∀ {X Z Y : Chain.Person}, Chain.Above Y Z → Chain.Reports X Y → Chain.Above X Z
+Chain.Under.under_one : ∀ {X Y : Chain.Person}, Chain.Reports X Y → Chain.Under X Y
+Chain.Under.under_step : ∀ {X Z Y : Chain.Person}, Chain.Under Y Z → Chain.Reports X Y → Chain.Under X Z
 -/
 #guard_msgs in
 -- ANCHOR: exported
-#print Chain.Above
+#print Chain.Under
 -- ANCHOR_END: exported
 
 /-! ## Kernel-checked certificates -/
 
 -- ANCHOR: certify
-lf_certify chain Ch11.marco_above_lena_lf
-  lp%{ above marco lena }%
+lf_certify chain Ch11.marco_under_lena_lf
+  lp%{ under marco lena }%
 -- ANCHOR_END: certify
 
 /--
-info: theorem Ch11.marco_above_lena_lf : Chain.Above Chain.Person.marco Chain.Person.lena :=
-Chain.Above.above_step (Chain.Above.above_one Chain.Reports.r_anna) Chain.Reports.r_marco
+info: theorem Ch11.marco_under_lena_lf : Chain.Under Chain.Person.marco Chain.Person.lena :=
+Chain.Under.under_step (Chain.Under.under_one Chain.Reports.r_anna) Chain.Reports.r_marco
 -/
 #guard_msgs in
 -- ANCHOR: certify_print
-#print Ch11.marco_above_lena_lf
+#print Ch11.marco_under_lena_lf
 -- ANCHOR_END: certify_print
 
-/-- info: 'Ch11.marco_above_lena_lf' does not depend on any axioms -/
+/-- info: 'Ch11.marco_under_lena_lf' does not depend on any axioms -/
 #guard_msgs in
 -- ANCHOR: certify_axioms
-#print axioms Ch11.marco_above_lena_lf
+#print axioms Ch11.marco_under_lena_lf
 -- ANCHOR_END: certify_axioms
 
 -- ANCHOR: certify_fail
 /-- error: query has no solution -/
 #guard_msgs in
-lf_certify chain Ch11.lena_above_marco_lf
-  lp%{ above lena marco }%
+lf_certify chain Ch11.lena_under_marco_lf
+  lp%{ under lena marco }%
 -- ANCHOR_END: certify_fail
 
 /-! ## Hypothetical judgments: found, not yet exported -/
@@ -99,26 +99,26 @@ lf_signature hyp lp%{
   marco : person.
   reports : person -> person -> type.
   r_marco : reports marco anna.
-  above : person -> person -> type.
-  above_one  : above X Y <- reports X Y.
-  above_step : above X Z <- reports X Y <- above Y Z.
-  % every possible report of M is below B
   under : person -> person -> type.
-  under_all : under M B
-    <- (pi x:person\ reports x M -> above x B).
+  under_one  : under X Y <- reports X Y.
+  under_step : under X Z <- reports X Y <- under Y Z.
+  % every possible report of M is below B
+  team_under : person -> person -> type.
+  team_all : team_under M B
+    <- (pi x:person\ reports x M -> under x B).
 }%
 -- ANCHOR_END: hyp_sig
 
 /--
-info: proof: under_all marco anna (x0\ x1\ above_step x0 anna marco (above_one marco anna r_marco) x1)
+info: proof: team_all marco anna (x0\ x1\ under_step x0 anna marco (under_one marco anna r_marco) x1)
 -/
 #guard_msgs in
 -- ANCHOR: hyp_query
-#lf_query hyp lp%{ under marco anna }%
+#lf_query hyp lp%{ team_under marco anna }%
 -- ANCHOR_END: hyp_query
 
 /--
-error: lp%:13:2: in declaration 'under_all': outside the exportable fragment: a hypothetical premise over a family without binders
+error: lp%:13:2: in declaration 'team_all': outside the exportable fragment: a hypothetical premise over a family without binders
 -/
 #guard_msgs in
 -- ANCHOR: hyp_export
@@ -141,19 +141,19 @@ theorem reorg_consistent : Consistent reorg := by
   decide
 -- ANCHOR_END: reorg
 
--- ANCHOR: above
+-- ANCHOR: under
 /-- Is `(a, b)` a reporting line in `s`? -/
 def edge (s : Store) (a b : Person) : Bool :=
   s.reportsTo.contains (a, b)
 
-/-- `a` is somewhere below `b` in the reporting
+/-- `a` is somewhere under `b` in the reporting
     chain of `s`. -/
-inductive Above (s : Store) : Person → Person → Prop
+inductive Under (s : Store) : Person → Person → Prop
   | one {a b : Person} :
-      edge s a b = true → Above s a b
+      edge s a b = true → Under s a b
   | step {a b c : Person} :
-      edge s a b = true → Above s b c → Above s a c
--- ANCHOR_END: above
+      edge s a b = true → Under s b c → Under s a c
+-- ANCHOR_END: under
 
 -- ANCHOR: toMem
 /-- The LF people are the memory's people. -/
@@ -171,17 +171,17 @@ theorem reports_sound {a b : Chain.Person}
   cases h <;> rfl
 
 /-- Every LF derivation is a chain in the store. -/
-theorem above_sound {a b : Chain.Person} :
-    Chain.Above a b → Above reorg (toMem a) (toMem b)
-  | .above_one r => .one (reports_sound r)
-  | .above_step h r =>
-      .step (reports_sound r) (above_sound h)
+theorem under_sound {a b : Chain.Person} :
+    Chain.Under a b → Under reorg (toMem a) (toMem b)
+  | .under_one r => .one (reports_sound r)
+  | .under_step h r =>
+      .step (reports_sound r) (under_sound h)
 -- ANCHOR_END: sound
 
 -- ANCHOR: transfer
-theorem marco_above_lena :
-    Above reorg .marco .lena :=
-  above_sound marco_above_lena_lf
+theorem marco_under_lena :
+    Under reorg .marco .lena :=
+  under_sound marco_under_lena_lf
 -- ANCHOR_END: transfer
 
 -- ANCHOR: liar

@@ -8,7 +8,7 @@ The tactic searches in λProlog and builds a Lean proof
 term. Lean checks the term; the kernel checks the
 theorem. A wrong search, or a wrong hint, is rejected.
 
-`reorg`, `edge` and `Above` repeat the definitions of
+`reorg`, `edge` and `Under` repeat the definitions of
 `Certificates.lean` in their own namespace, so that this
 module stands alone.
 -/
@@ -25,14 +25,14 @@ def reorg : Store :=
 def edge (s : Store) (a b : Person) : Bool :=
   s.reportsTo.contains (a, b)
 
-inductive Above (s : Store) : Person → Person → Prop
+inductive Under (s : Store) : Person → Person → Prop
   | one {a b : Person} :
-      edge s a b = true → Above s a b
+      edge s a b = true → Under s a b
   | step {a b c : Person} :
-      edge s a b = true → Above s b c → Above s a c
+      edge s a b = true → Under s b c → Under s a c
 
 -- ANCHOR: by_hand
-example : Above reorg .marco .lena :=
+example : Under reorg .marco .lena :=
   .step (b := .anna) rfl (.one rfl)
 -- ANCHOR_END: by_hand
 
@@ -61,13 +61,13 @@ elpi_accumulate ch11_tac lp%{
 elpi_accumulate ch11_tac lp%{
   % search a chain of at most N + 1 links and
   % build the proof term on the way back
-  pred above i:int, i:term, i:term, i:term, o:term.
-  above _ S A B P :- edge S A B,
-    lean.mk_app {{@Ch11.Tac.Above.one}}
+  pred under i:int, i:term, i:term, i:term, o:term.
+  under _ S A B P :- edge S A B,
+    lean.mk_app {{@Ch11.Tac.Under.one}}
       [S, A, B, {{Eq.refl true}}] P.
-  above N S A C P :- N > 0, person B, edge S A B,
-    N1 is N - 1, above N1 S B C Q,
-    lean.mk_app {{@Ch11.Tac.Above.step}}
+  under N S A C P :- N > 0, person B, edge S A B,
+    N1 is N - 1, under N1 S B C Q,
+    lean.mk_app {{@Ch11.Tac.Under.step}}
       [S, A, B, C, {{Eq.refl true}}, Q] P.
 }%
 -- ANCHOR_END: build
@@ -76,34 +76,34 @@ elpi_accumulate ch11_tac lp%{
 elpi_accumulate ch11_tac lp%{
   pred solve i:goal, i:list argument, o:list goal.
   solve (goal _ P
-          {{Ch11.Tac.Above lp:{{S}} lp:{{A}} lp:{{B}}}})
+          {{Ch11.Tac.Under lp:{{S}} lp:{{A}} lp:{{B}}}})
         _ [] :-
-    above 4 S A B P.
+    under 4 S A B P.
 }%
 elpi_tactic chain_search := ch11_tac
 -- ANCHOR_END: solve
 
 -- ANCHOR: use
-theorem marco_above_lena : Above reorg .marco .lena := by
+theorem marco_under_lena : Under reorg .marco .lena := by
   elpi chain_search
 
-theorem taras_above_lena : Above reorg .taras .lena := by
+theorem taras_under_lena : Under reorg .taras .lena := by
   elpi chain_search
 -- ANCHOR_END: use
 
 /--
-info: theorem Ch11.Tac.marco_above_lena : Above reorg Person.marco Person.lena :=
-Above.step (Eq.refl true) (Above.one (Eq.refl true))
+info: theorem Ch11.Tac.marco_under_lena : Under reorg Person.marco Person.lena :=
+Under.step (Eq.refl true) (Under.one (Eq.refl true))
 -/
 #guard_msgs in
 -- ANCHOR: print
-#print marco_above_lena
+#print marco_under_lena
 -- ANCHOR_END: print
 
 -- ANCHOR: fail
 /-- error: tactic chain_search failed: solve has no solution -/
 #guard_msgs in
-example : Above World.store .marco .lena := by
+example : Under World.store .marco .lena := by
   elpi chain_search
 -- ANCHOR_END: fail
 
@@ -117,38 +117,38 @@ elpi_accumulate ch11_hint lp%{
   % with no check of our own
   pred solve i:goal, i:list argument, o:list goal.
   solve (goal _ P
-          {{Ch11.Tac.Above lp:{{S}} lp:{{A}} lp:{{B}}}})
+          {{Ch11.Tac.Under lp:{{S}} lp:{{A}} lp:{{B}}}})
         [trm M] [] :-
-    lean.mk_app {{@Ch11.Tac.Above.one}}
+    lean.mk_app {{@Ch11.Tac.Under.one}}
       [S, M, B, {{Eq.refl true}}] Q,
-    lean.mk_app {{@Ch11.Tac.Above.step}}
+    lean.mk_app {{@Ch11.Tac.Under.step}}
       [S, A, M, B, {{Eq.refl true}}, Q] P.
 }%
 elpi_tactic chain_hint := ch11_hint
 -- ANCHOR_END: hint
 
 -- ANCHOR: hint_ok
-example : Above reorg .marco .lena := by
+example : Under reorg .marco .lena := by
   elpi chain_hint Person.anna
 -- ANCHOR_END: hint_ok
 
 /--
 error: (kernel) application type mismatch
-  Above.step (Eq.refl true)
+  Under.step (Eq.refl true)
 argument has type
   true = true
 but function has type
   edge reorg Person.marco Person.taras = true →
-    Above reorg Person.taras Person.lena → Above reorg Person.marco Person.lena
+    Under reorg Person.taras Person.lena → Under reorg Person.marco Person.lena
 -/
 #guard_msgs in
 -- ANCHOR: hint_bad
-example : Above reorg .marco .lena := by
+example : Under reorg .marco .lena := by
   elpi chain_hint Person.taras
 -- ANCHOR_END: hint_bad
 
 end Ch11.Tac
 
-/-- info: 'Ch11.Tac.marco_above_lena' depends on axioms: [propext] -/
+/-- info: 'Ch11.Tac.marco_under_lena' depends on axioms: [propext] -/
 #guard_msgs in
-#print axioms Ch11.Tac.marco_above_lena
+#print axioms Ch11.Tac.marco_under_lena

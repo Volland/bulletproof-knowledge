@@ -1,4 +1,5 @@
 import Knowledge.Memory
+import Knowledge.Ch05.ClosedWorld
 
 /-!
 # Chapter 5: the boundary pattern
@@ -45,12 +46,6 @@ inductive Rejection where
   deriving Repr
 -- ANCHOR_END: rejection
 
-/-- The people the agent knows (the type is closed,
-    so this list can be complete). -/
-def roster : List Person :=
-  [.anna, .marco, .lena, .taras, .sofia]
-
--- ANCHOR: to_event
 /-- Close a report: every field present, the span the
     right way round, and every person decided. -/
 def Report.toEvent (r : Report) :
@@ -62,16 +57,14 @@ def Report.toEvent (r : Report) :
   let some stop := r.stop
     | throw (.missing "stop")
   if h : start ≤ stop then
-    match roster.find? (r.present · == .unknown) with
+    match Person.all.find? (r.present · == .unknown) with
     | some p => throw (.undecided p)
     | none =>
-      let who := roster.filter (r.present · == .yes)
+      let who := Person.all.filter (r.present · == .yes)
       pure { id := r.id, kind := r.kind, who, place
              span := ⟨start, stop, h⟩ }
   else throw .backwards
--- ANCHOR_END: to_event
 
--- ANCHOR: ingest
 /-- The only door into memory: close the report, then
     let the certified store check the axioms. -/
 def ingest (m : Certified) (r : Report) :
@@ -80,9 +73,19 @@ def ingest (m : Certified) (r : Report) :
   match m.insert e with
   | .ok m'   => pure m'
   | .error v => throw (.violates v)
--- ANCHOR_END: ingest
 
--- ANCHOR: reports
+-- ANCHOR: signatures
+/-- info: Ch05.Report.toEvent (r : Report) :
+  Except Rejection Event -/
+#guard_msgs (whitespace := lax) in
+#check Report.toEvent
+
+/-- info: Ch05.ingest (m : Certified) (r : Report) :
+  Except Rejection Certified -/
+#guard_msgs (whitespace := lax) in
+#check ingest
+-- ANCHOR_END: signatures
+
 /-- Marco's calendar: a complete record. -/
 def lunch : Report :=
   { id := 3, kind := .meeting, place := some .porto
@@ -92,6 +95,7 @@ def lunch : Report :=
       | .marco | .taras => .yes
       | _ => .no }
 
+-- ANCHOR: maybe_taras
 /-- An LLM summary: "Anna and Lena met in Berlin;
     Taras may have joined." -/
 def maybeTaras : Report :=
@@ -102,6 +106,7 @@ def maybeTaras : Report :=
       | .anna | .lena => .yes
       | .taras => .unknown
       | _ => .no }
+-- ANCHOR_END: maybe_taras
 
 /-- "Anna had a meeting at noon." Where? -/
 def noPlace : Report :=
@@ -120,7 +125,6 @@ def phantomReport : Report :=
     present := fun
       | .anna | .lena => .yes
       | _ => .no }
--- ANCHOR_END: reports
 
 -- ANCHOR: run
 /-- What the boundary says about one report. -/
@@ -128,6 +132,7 @@ def verdict (r : Report) : String :=
   match ingest memory r with
   | .ok m    => s!"{r.id}: stored, {m.events.length} events"
   | .error x => s!"{r.id}: refused, {repr x}"
+-- ANCHOR_END: run
 
 /--
 info: 3: stored, 3 events
@@ -140,7 +145,6 @@ info: 3: stored, 3 events
 #eval for r in [lunch, maybeTaras, noPlace,
                 phantomReport] do
   IO.println (verdict r)
--- ANCHOR_END: run
 
 -- ANCHOR: ask
 /-- Ask the closed store about attendance. A recorded

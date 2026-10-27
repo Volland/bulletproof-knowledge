@@ -15,10 +15,10 @@ r_taras : reports taras lena.
 r_anna  : reports anna lena.  % after the reorg
 % ANCHOR_END: reports
 
-% ANCHOR: above
-above : person -> person -> type.
-above_one  : above X Y <- reports X Y.
-above_step : above X Z
+% ANCHOR: under
+under : person -> person -> type.
+under_one  : under X Y <- reports X Y.
+under_step : under X Z
                <- reports X Y
-               <- above Y Z.
-% ANCHOR_END: above
+               <- under Y Z.
+% ANCHOR_END: under

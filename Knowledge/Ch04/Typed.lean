@@ -15,9 +15,7 @@ open Memory Memory.World
 
 -- ANCHOR: untyped
 /-- A schema-free graph: every node is a string. -/
-abbrev Triple := String × String × String
-
-def graph : List Triple :=
+def graph : List (String × String × String) :=
   [("anna",   "worksAt", "acme"),
    ("lisbon", "worksAt", "anna")]  -- accepted!
 
@@ -93,13 +91,10 @@ def bad : Fact := .worksAt City.lisbon Person.anna
 -- ANCHOR: worksAt
 /-- The property `worksAt` as a relation over the
     store: domain `Person`, range `Org`. -/
-def WorksAt (s : Store) (p : Person) (o : Org) : Prop :=
+abbrev WorksAt (s : Store) (p : Person) (o : Org) :
+    Prop :=
   (p, o) ∈ s.worksAt
 -- ANCHOR_END: worksAt
-
-instance (s : Store) (p : Person) (o : Org) :
-    Decidable (WorksAt s p o) :=
-  inferInstanceAs (Decidable ((p, o) ∈ s.worksAt))
 
 -- ANCHOR: signature
 /-- info: WorksAt : Store → Person → Org → Prop -/
@@ -136,23 +131,33 @@ theorem lisbon_in_portugal :
 
 -- ANCHOR: pat_error
 /--
-error: Type mismatch
-  rfl
-has type
-  ?m.5 = ?m.5
-but is expected to have type
+error: Tactic `decide` proved that the proposition
   City.berlin.country = Country.portugal
+is false
 -/
 #guard_msgs in
-example : City.berlin.country = .portugal := rfl
+example : City.berlin.country = .portugal := by
+  decide
 -- ANCHOR_END: pat_error
 
 -- ANCHOR: axiom
-/-- A schema axiom, proven once for every kind:
-    only calls can happen without physical presence. -/
-theorem only_calls_virtual (k : EventKind) :
-    k.physical = false → k = .call := by
+/-- A schema axiom: only calls can happen
+    without physical presence. -/
+def OnlyCallsVirtual : Prop :=
+  ∀ k : EventKind, k.physical = false → k = .call
+-- ANCHOR_END: axiom
+
+/-- The proof: try each of the four kinds
+    (the tactics are taught in Chapter 6). -/
+theorem only_calls_virtual : OnlyCallsVirtual := by
+  intro k
   cases k <;> simp [EventKind.physical]
+
+-- ANCHOR: axiom
+
+/-- info: only_calls_virtual : OnlyCallsVirtual -/
+#guard_msgs in
+#check (only_calls_virtual)
 -- ANCHOR_END: axiom
 
 -- ANCHOR: store_axioms
@@ -174,42 +179,83 @@ def Meeting.toEvent (m : Meeting) : Event := m.val
 
 -- ANCHOR: subtype_error
 /--
-error: Application type mismatch: The argument
-  rfl
-has type
-  ?m.4 = ?m.4
-but is expected to have type
+error: Tactic `decide` proved that the proposition
   review.kind = EventKind.meeting
-in the application
-  ⟨review, ⋯⟩
+is false
 -/
 #guard_msgs in
-def reviewMeeting : Meeting := ⟨review, rfl⟩
+def reviewMeeting : Meeting := ⟨review, by decide⟩
 -- ANCHOR_END: subtype_error
 
 -- ANCHOR: subclass_axiom
 /-- Inherited knowledge: every meeting is physical. -/
-theorem Meeting.physical (m : Meeting) :
-    m.toEvent.kind.physical = true := by
-  obtain ⟨e, h⟩ := m
-  simp [Meeting.toEvent, h, EventKind.physical]
+def MeetingsArePhysical : Prop :=
+  ∀ m : Meeting, m.toEvent.kind.physical = true
 -- ANCHOR_END: subclass_axiom
 
--- ANCHOR: located
-/-- Anything with a place: a preview of Chapter 8. -/
-class Located (α : Type) where
-  city : α → City
+/-- The proof opens the meeting into its event and
+    its evidence (tactics: Chapter 6). -/
+theorem Meeting.physical : MeetingsArePhysical := by
+  intro m
+  obtain ⟨e, h⟩ := m
+  simp [Meeting.toEvent, h, EventKind.physical]
 
-instance : Located Event := ⟨Event.place⟩
-instance : Located Meeting := ⟨fun m => m.toEvent.place⟩
+-- ANCHOR: subclass_axiom
 
-/-- One definition serves every located class. -/
-def country {α : Type} [Located α] (x : α) : Country :=
-  (Located.city x).country
-
-/-- info: Memory.Country.portugal -/
+/-- info: Meeting.physical : MeetingsArePhysical -/
 #guard_msgs in
-#eval country kickoffMeeting
--- ANCHOR_END: located
+#check (Meeting.physical)
+-- ANCHOR_END: subclass_axiom
+
+-- ANCHOR: owl_tbox
+/-- The TBox. The classes `:Person`, `:City` and
+    `:Org` are the shared types, disjoint for free. -/
+structure OrgMemory where
+  /-- `:worksAt`: domain `:Person`, range `:Org`. -/
+  worksAt : List (Person × Org)
+  /-- `:headquarters`, functional: at most one. -/
+  hq      : Org → Option City
+-- ANCHOR_END: owl_tbox
+
+-- ANCHOR: owl_abox
+/-- `:acme :headquarters :lisbon`. The rest are
+    not recorded. -/
+def knownHq : Org → Option City
+  | .acme     => some .lisbon
+  | .lumen    => none
+  | .kyivTech => none
+
+/-- The ABox: `:anna :worksAt :acme`, plus `knownHq`. -/
+def orgMemory : OrgMemory :=
+  { worksAt := [(.anna, .acme)]
+    hq      := knownHq }
+
+/-- info: some (Memory.City.lisbon) -/
+#guard_msgs in
+#eval orgMemory.hq .acme
+-- ANCHOR_END: owl_abox
+
+-- ANCHOR: counterexample
+/-- A draft axiom: "every physical event
+    is a meeting". -/
+def DraftAxiom : Prop :=
+  ∀ k : EventKind, k.physical = true → k = .meeting
+-- ANCHOR_END: counterexample
+
+/-- Trips are physical but are not meetings. -/
+theorem draft_refuted : ¬ DraftAxiom := by
+  intro h
+  cases h .trip rfl
+
+-- ANCHOR: counterexample
+
+/-- info: draft_refuted : ¬DraftAxiom -/
+#guard_msgs in
+#check (draft_refuted)
+
+/-- info: true -/
+#guard_msgs in
+#eval EventKind.trip.physical
+-- ANCHOR_END: counterexample
 
 end Ch04

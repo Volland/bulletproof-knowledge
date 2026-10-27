@@ -143,27 +143,6 @@ theorem call_noBilocation {s : Store} {e : Event}
   exact h e₁ h₁ e₂ h₂ ph₁ ph₂
 -- ANCHOR_END: call_safe
 
--- ANCHOR: call_never_rejected
-/-- If a store has no bilocation, `diagnose` does not
-    blame bilocation. -/
-theorem diagnose_ne {s : Store} (h : NoBilocation s) :
-    (diagnose s).getD .uniqueIds ≠ .noBilocation := by
-  unfold diagnose
-  repeat' split
-  all_goals simp_all
-
-/-- So `insert` never rejects a call for bilocation.
-    It may still reject it for another reason. -/
-theorem call_not_bilocation (m : Certified)
-    {e : Event} (hk : e.kind = .call) :
-    m.insert e ≠ .error .noBilocation := by
-  have hb := call_noBilocation hk m.ok.noBilocation
-  simp only [Certified.insert]
-  split
-  · simp
-  · simpa using diagnose_ne hb
--- ANCHOR_END: call_never_rejected
-
 -- ANCHOR: broken
 /-- What each violation name claims about a store. -/
 def Broken : Violation → Store → Prop
@@ -177,13 +156,19 @@ def Broken : Violation → Store → Prop
 /-- `diagnose` never blames an axiom that holds. -/
 theorem diagnose_sound {s : Store} {v : Violation}
     (h : diagnose s = some v) : Broken v s := by
+  -- proof: one case per branch of `diagnose`
+-- ANCHOR_END: diagnose_correct
   unfold diagnose at h
   repeat' split at h
   all_goals (cases h <;> simp_all [Broken])
 
+-- ANCHOR: diagnose_correct
+
 /-- `diagnose` is silent exactly on consistent stores. -/
 theorem diagnose_none_iff (s : Store) :
     diagnose s = none ↔ Consistent s := by
+  -- proof: one case per branch of `diagnose`
+-- ANCHOR_END: diagnose_correct
   constructor
   · intro h
     unfold diagnose at h
@@ -193,7 +178,6 @@ theorem diagnose_none_iff (s : Store) :
   · intro c
     simp [diagnose, c.bornBefore, c.noBilocation,
       c.singleManager, c.uniqueIds]
--- ANCHOR_END: diagnose_correct
 
 -- ANCHOR: insert_error
 /-- The reason `insert` reports is true: the named
@@ -215,5 +199,16 @@ theorem insert_error_sound {m : Certified}
       cases h
       exact diagnose_sound hd
 -- ANCHOR_END: insert_error
+
+-- ANCHOR: call_never_rejected
+/-- So `insert` never rejects a call for bilocation.
+    It may still reject it for another reason. -/
+theorem call_not_bilocation (m : Certified)
+    {e : Event} (hk : e.kind = .call) :
+    m.insert e ≠ .error .noBilocation := by
+  intro h
+  exact insert_error_sound h
+    (call_noBilocation hk m.ok.noBilocation)
+-- ANCHOR_END: call_never_rejected
 
 end Ch09

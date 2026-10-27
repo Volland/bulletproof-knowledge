@@ -177,7 +177,7 @@ instance {α : Type} {p : α → Prop} [Occurrence α] :
 -- ANCHOR_END: subtype-instance
 
 -- ANCHOR: physical-opaque
-/-- In-person events, as a `def` (compare `Meeting`
+/-- In-person events, as a `def` (compare `MeetingEv`
     in `Subtypes.lean`). -/
 def InPerson := { e : Event // e.kind.physical = true }
 
@@ -325,13 +325,14 @@ end Overlap
 #eval Located.place kickoff
 -- ANCHOR_END: overlap
 
--- ANCHOR: loop
 section Loop
+-- ANCHOR: loop
 /-- "A thing is located if a list of such things is."
     Each step asks for a bigger goal than the last. -/
 local instance {α : Type} [Located (List α)] :
     Located α :=
   ⟨fun a => Located.place [a]⟩
+-- ANCHOR_END: loop
 
 /--
 error: failed to synthesize
@@ -351,10 +352,12 @@ available using the `set_option diagnostics true`
 command.
 -/
 #guard_msgs (whitespace := lax) in
+-- ANCHOR: loop
+
 set_option synthInstance.maxHeartbeats 2000 in
 #eval Located.place Person.anna
-end Loop
 -- ANCHOR_END: loop
+end Loop
 
 -- ANCHOR: cycle
 section Cycle

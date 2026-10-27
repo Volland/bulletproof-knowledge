@@ -10,17 +10,15 @@ not silence: it is a proof of `¬`.
 
 For contrast, `OpenKickoff` models what an open-world
 reasoner knows: some facts, and no claim that they are all.
+
+Some proofs here use tactics taught in Chapter 6. The book
+shows their statements with `#check` and keeps the proofs in
+this file.
 -/
 
 namespace Ch05
 
 open Memory Memory.World
-
--- ANCHOR: ask_lena
-/-- info: false -/
-#guard_msgs in
-#eval decide (Store.attended kickoff .lena)
--- ANCHOR_END: ask_lena
 
 -- ANCHOR: lena_absent
 /-- Lena did not attend the kickoff: a theorem. -/
@@ -29,9 +27,9 @@ theorem lena_absent :
   decide
 -- ANCHOR_END: lena_absent
 
--- ANCHOR: works_at
-/-- Employment as a closed relation: a pair holds
-    exactly when it is on the store's list. -/
+/-- Employment as a closed relation: the same definition
+    as Chapter 4's `WorksAt`, repeated because chapter
+    modules do not import each other. -/
 def WorksAt (s : Store) (p : Person) (o : Org) : Prop :=
   (p, o) ∈ s.worksAt
 
@@ -39,18 +37,11 @@ instance (s : Store) (p : Person) (o : Org) :
     Decidable (WorksAt s p o) :=
   inferInstanceAs (Decidable ((p, o) ∈ s.worksAt))
 
+-- ANCHOR: works_at
 theorem lena_not_at_acme :
     ¬ WorksAt store .lena .acme := by
   decide
 -- ANCHOR_END: works_at
-
--- ANCHOR: una
-/-- Unique names: different constructors are
-    different individuals. -/
-theorem anna_is_not_lena :
-    Person.anna ≠ Person.lena := by
-  decide
--- ANCHOR_END: una
 
 -- ANCHOR: exhaustive
 /--
@@ -69,11 +60,18 @@ def Person.homeCity : Person → City
 /-- Every person the agent knows, listed once. -/
 def Person.all : List Person :=
   [.anna, .marco, .lena, .taras, .sofia]
+-- ANCHOR_END: all
 
 /-- The list really is complete: checked case by case. -/
 theorem Person.mem_all (p : Person) :
     p ∈ Person.all := by
   cases p <;> decide
+
+-- ANCHOR: all
+
+/-- info: Ch05.Person.mem_all (p : Person) : p ∈ Person.all -/
+#guard_msgs in
+#check Person.mem_all
 -- ANCHOR_END: all
 
 -- ANCHOR: who
@@ -96,7 +94,6 @@ info: [Memory.Person.lena, Memory.Person.taras,
 #eval absentees kickoff
 -- ANCHOR_END: who
 
--- ANCHOR: forall
 /-- To decide a claim about every person, decide it
     for each of the five on `Person.all`. -/
 instance (P : Person → Prop) [DecidablePred P] :
@@ -106,6 +103,7 @@ instance (P : Person → Prop) [DecidablePred P] :
   else
     isFalse fun h' => h fun p _ => h' p
 
+-- ANCHOR: forall
 /-- Everyone at the kickoff works at Acme. -/
 theorem kickoff_all_acme :
     ∀ p, Store.attended kickoff p →
@@ -138,25 +136,23 @@ example : ∀ w : OpenKickoff, ¬ w.Attended .lena := by
 
 -- ANCHOR: two_worlds
 /-- A world that fits the facts, with Lena present. -/
-def withLena : OpenKickoff where
+abbrev withLena : OpenKickoff where
   Attended p := p = .anna ∨ p = .marco ∨ p = .lena
-  anna  := .inl rfl
-  marco := .inr (.inl rfl)
+  anna  := by decide
+  marco := by decide
 
 /-- A world that fits the facts, with Lena absent. -/
-def withoutLena : OpenKickoff where
+abbrev withoutLena : OpenKickoff where
   Attended p := p = .anna ∨ p = .marco
-  anna  := .inl rfl
-  marco := .inr rfl
+  anna  := by decide
+  marco := by decide
 
 /-- Both worlds agree with every stated fact and
     disagree about Lena: the facts leave her open. -/
 theorem lena_unknown :
     withLena.Attended .lena ∧
-      ¬ withoutLena.Attended .lena :=
-  ⟨.inr (.inr rfl), by
-    show ¬ (_ ∨ _)
-    decide⟩
+      ¬ withoutLena.Attended .lena := by
+  decide
 -- ANCHOR_END: two_worlds
 
 -- ANCHOR: completion
@@ -164,12 +160,20 @@ theorem lena_unknown :
     the facts (Clark's completion). -/
 structure ClosedKickoff extends OpenKickoff where
   only : ∀ p, Attended p → p = .anna ∨ p = .marco
+-- ANCHOR_END: completion
 
 /-- In every closed world, Lena was absent. -/
 theorem closed_no_lena (w : ClosedKickoff) :
     ¬ w.Attended .lena := by
   intro h
   cases w.only .lena h <;> contradiction
+
+-- ANCHOR: completion
+
+/-- info: Ch05.closed_no_lena (w : ClosedKickoff) :
+  ¬w.Attended Person.lena -/
+#guard_msgs (whitespace := lax) in
+#check closed_no_lena
 -- ANCHOR_END: completion
 
 end Ch05

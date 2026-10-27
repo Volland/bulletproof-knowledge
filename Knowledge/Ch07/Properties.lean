@@ -9,7 +9,7 @@ values it may have is part of its type:
 * exactly one: a total function (`City.country`);
 * at most one: a function into `Option`;
 * any number: a function into `List`;
-* a constraint the type cannot express: a `Prop`.
+* a promise the data must keep: an axiom (`Functional`).
 -/
 
 namespace Ch07
@@ -56,6 +56,17 @@ def eventsOf (s : Store) (p : Person) : List Nat :=
 #eval eventsOf store .lena
 -- ANCHOR_END: many
 
+-- ANCHOR: messy
+/-- A store where Anna has two employers. -/
+def messy : Store :=
+  { store with
+    worksAt := (.anna, .lumen) :: store.worksAt }
+
+/-- info: some (Memory.Org.lumen) -/
+#guard_msgs in
+#eval employer messy .anna
+-- ANCHOR_END: messy
+
 -- ANCHOR: functional
 /-- A list-backed relation is *functional* when each
     key has at most one value. -/
@@ -66,55 +77,13 @@ instance {α β : Type} [DecidableEq α] [DecidableEq β]
     (r : List (α × β)) : Decidable (Functional r) := by
   unfold Functional; infer_instance
 
+example : Functional store.worksAt := by decide
+example : ¬ Functional messy.worksAt := by decide
+
 /-- `SingleManager` is this constraint, by definition. -/
 theorem singleManager_iff (s : Store) :
     SingleManager s ↔ Functional s.reportsTo :=
   Iff.rfl
 -- ANCHOR_END: functional
-
--- ANCHOR: messy
-/-- A store where Anna has two employers. -/
-def messy : Store :=
-  { store with
-    worksAt := (.anna, .lumen) :: store.worksAt }
-
-/-- info: some (Memory.Org.lumen) -/
-#guard_msgs in
-#eval employer messy .anna
-
-example : Functional store.worksAt := by decide
-example : ¬ Functional messy.worksAt := by decide
--- ANCHOR_END: messy
-
--- ANCHOR: minCard
-/-- At least `n` values: a constraint, not a type. -/
-def AtLeast (n : Nat) (e : Event) : Prop :=
-  n ≤ e.who.length
-
-instance (n : Nat) (e : Event) :
-    Decidable (AtLeast n e) :=
-  inferInstanceAs (Decidable (n ≤ _))
-
-example : AtLeast 2 kickoff := by decide
-example : ¬ AtLeast 3 kickoff := by decide
--- ANCHOR_END: minCard
-
--- ANCHOR: pair
-/-- Exactly two values, in the type: a list that
-    carries a proof of its length. -/
-abbrev Pair := { l : List Person // l.length = 2 }
-
-def oneOnOne : Pair := ⟨[.anna, .taras], by decide⟩
--- ANCHOR_END: pair
-
--- ANCHOR: pair_bad
-/--
-error: Tactic `decide` proved that the proposition
-  [Person.anna].length = 2
-is false
--/
-#guard_msgs in
-def lonely : Pair := ⟨[.anna], by decide⟩
--- ANCHOR_END: pair_bad
 
 end Ch07

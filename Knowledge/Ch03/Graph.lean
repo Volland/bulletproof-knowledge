@@ -124,8 +124,8 @@ structure LNode where
   props : Props
   deriving Repr
 
-/-- An edge joins two node ids and has
-    its own label and properties. -/
+/-- An edge joins two node ids. This minimal
+    model gives it no id of its own. -/
 structure LEdge where
   src   : Nat
   dst   : Nat

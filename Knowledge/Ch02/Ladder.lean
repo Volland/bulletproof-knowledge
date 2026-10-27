@@ -11,6 +11,9 @@ namespace Ch02
 
 open Memory Memory.World
 
+/- `α` and `β` stand for any type in the definitions below. -/
+variable {α β : Type}
+
 -- ANCHOR: rung0
 /-- Two sentences, treated as opaque atoms. -/
 abbrev AnnaAtKickoff : Prop := Person.anna ∈ kickoff.who
@@ -36,10 +39,12 @@ abbrev Attended (e : Event) (p : Person) : Prop :=
 def TeamAtKickoff : Prop :=
   ∀ p : Person, ReportsTo p .anna → Attended kickoff p
 
-theorem teamAtKickoff : TeamAtKickoff := by
+/-- Checked person by person against the store. -/
+theorem teamAtKickoff : TeamAtKickoff
+-- ANCHOR_END: rung1
+    := by
   intro p
   cases p <;> decide
--- ANCHOR_END: rung1
 
 -- ANCHOR: witness
 /-- "Did Taras attend anything?" The answer is a
@@ -62,13 +67,13 @@ example : Attended kickoff .taras := by decide
 -- ANCHOR: rung2
 /-- Properties of relations: predicates whose
     argument is itself a relation. -/
-def Symmetric {α : Type} (R : α → α → Prop) : Prop :=
+def Symmetric (R : α → α → Prop) : Prop :=
   ∀ a b, R a b → R b a
 
-def Transitive {α : Type} (R : α → α → Prop) : Prop :=
+def Transitive (R : α → α → Prop) : Prop :=
   ∀ a b c, R a b → R b c → R a c
 
-def Functional {α β : Type} (R : α → β → Prop) : Prop :=
+def Functional (R : α → β → Prop) : Prop :=
   ∀ a b c, R a b → R a c → b = c
 -- ANCHOR_END: rung2
 
@@ -77,26 +82,29 @@ theorem overlaps_symmetric :
     Symmetric Interval.Overlaps :=
   fun _ _ h => Interval.overlaps_symm h
 
-theorem reportsTo_functional : Functional ReportsTo := by
+/-- Checked over all 125 triples of people. -/
+theorem reportsTo_functional : Functional ReportsTo
+-- ANCHOR_END: rung2_use
+    := by
   intro a b c
   cases a <;> cases b <;> cases c <;> decide
--- ANCHOR_END: rung2_use
 
 -- ANCHOR: chain
 /-- The chain of a relation: one step, or one step
     followed by a chain. Defined once, for every `R`. -/
-inductive Chain {α : Type} (R : α → α → Prop) :
-    α → α → Prop where
-  | step {a b : α} : R a b → Chain R a b
-  | link {a b c : α} : R a b → Chain R b c → Chain R a c
+inductive Chain (R : α → α → Prop) : α → α → Prop where
+  | step : ∀ a b, R a b → Chain R a b
+  | link : ∀ a b c, R a b → Chain R b c → Chain R a c
 
 /-- A rule about rules: every chain is transitive. -/
-theorem chain_transitive {α : Type}
-    (R : α → α → Prop) : Transitive (Chain R) := by
-  intro a b c h₁ h₂
-  induction h₁ with
-  | step h => exact .link h h₂
-  | link h _ ih => exact .link h (ih h₂)
+theorem chain_transitive (R : α → α → Prop) :
+    Transitive (Chain R)
 -- ANCHOR_END: chain
+    := by
+  intro x y z h₁ h₂
+  induction h₁ with
+  | step a b h => exact .link a b z h h₂
+  | link a b c h _ ih =>
+    exact .link a b z h (ih h₂)
 
 end Ch02

@@ -164,18 +164,18 @@ info: [(Memory.Person.anna, Memory.Person.anna),
 -- ANCHOR_END: self_report
 
 -- ANCHOR: busy
-/-- A daily stand-up call, the `n`-th one. -/
-def standup (n : Nat) : Event :=
+/-- The `n`-th daily call of Anna and Lena. -/
+def dailyCall (n : Nat) : Event :=
   { id := 100 + n, kind := .call
     who := [.anna, .lena], place := .kyiv
     span := ⟨day 3000 + 30 * n,
              day 3000 + 30 * n + 15,
              Nat.le_add_right _ _⟩ }
 
-/-- Our store plus `n` stand-ups. -/
+/-- Our store plus `n` daily calls. -/
 def busy (n : Nat) : Store :=
   { store with
-    events := (List.range n).map standup
+    events := (List.range n).map dailyCall
                 ++ store.events }
 -- ANCHOR_END: busy
 
@@ -213,21 +213,18 @@ theorem calls_noBilocation {s : Store}
 theorem busy_noBilocation (n : Nat) :
     NoBilocation (busy n) := by
   apply calls_noBilocation _ _ store_noBilocation
-  intro e he
-  simp only [List.mem_map] at he
-  obtain ⟨k, _, rfl⟩ := he
-  rfl
+  simp [dailyCall]
 -- ANCHOR_END: busy_all
 
--- ANCHOR: standups_apart
-/-- Consecutive stand-ups never overlap, for every
+-- ANCHOR: dailyCalls_apart
+/-- Consecutive daily calls never overlap, for every
     `n`. `simp` unfolds, `omega` counts. -/
-theorem standups_apart (n : Nat) :
-    ¬ Overlaps (standup n).span
-               (standup (n + 1)).span := by
-  simp only [Overlaps, standup, day]
+theorem dailyCalls_apart (n : Nat) :
+    ¬ Overlaps (dailyCall n).span
+               (dailyCall (n + 1)).span := by
+  simp only [Overlaps, dailyCall, day]
   unfold Time
   omega
--- ANCHOR_END: standups_apart
+-- ANCHOR_END: dailyCalls_apart
 
 end Ch09

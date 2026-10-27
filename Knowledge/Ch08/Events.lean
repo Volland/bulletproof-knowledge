@@ -26,73 +26,75 @@ class Physical (α : Type) extends EventClass α where
   physical : kind.physical = true
 -- ANCHOR_END: event-class
 
--- ANCHOR: classes
-/-- A meeting: at least two people. -/
-structure Meeting where
+-- ANCHOR: meeting
+/-- A meeting: at least two people, in person. The
+    `R` marks a record with laws, to keep it apart from
+    the `MeetingEv` subtype in `Subtypes.lean`. -/
+structure MeetingR where
   ev     : Event
   isKind : ev.kind = .meeting
   quorum : 2 ≤ ev.who.length
 
-/-- A call: at least two people, anywhere. -/
-structure Call where
-  ev     : Event
-  isKind : ev.kind = .call
-  quorum : 2 ≤ ev.who.length
-
-/-- A talk: a speaker, who is present. -/
-structure Talk where
-  ev      : Event
-  isKind  : ev.kind = .talk
-  speaker : Person
-  speaks  : speaker ∈ ev.who
-
-/-- A trip: one traveller per record. -/
-structure Trip where
-  ev     : Event
-  isKind : ev.kind = .trip
-  solo   : ev.who.length = 1
--- ANCHOR_END: classes
-
--- ANCHOR: instances
-instance : Physical Meeting where
+instance : Physical MeetingR where
   toEvent m  := m.ev
   kind       := .meeting
   kind_eq m  := m.isKind
   nonempty m := List.ne_nil_of_length_pos
                   (Nat.lt_of_lt_of_le (by decide) m.quorum)
   physical   := rfl
+-- ANCHOR_END: meeting
 
-instance : EventClass Call where
+-- ANCHOR: others
+/-- A call: at least two people, anywhere. -/
+structure CallR where
+  ev     : Event
+  isKind : ev.kind = .call
+  quorum : 2 ≤ ev.who.length
+
+/-- A talk: a speaker, who is present (Chapter 7). -/
+structure TalkR where
+  ev      : Event
+  isKind  : ev.kind = .talk
+  speaker : Person
+  speaks  : speaker ∈ ev.who
+
+/-- A trip: one traveller per record. -/
+structure TripR where
+  ev     : Event
+  isKind : ev.kind = .trip
+  solo   : ev.who.length = 1
+
+instance : EventClass CallR where
   toEvent c  := c.ev
   kind       := .call
   kind_eq c  := c.isKind
   nonempty c := List.ne_nil_of_length_pos
                   (Nat.lt_of_lt_of_le (by decide) c.quorum)
 
-instance : Physical Talk where
+instance : Physical TalkR where
   toEvent t  := t.ev
   kind       := .talk
   kind_eq t  := t.isKind
   nonempty t := List.ne_nil_of_mem t.speaks
   physical   := rfl
 
-instance : Physical Trip where
+instance : Physical TripR where
   toEvent t  := t.ev
   kind       := .trip
   kind_eq t  := t.isKind
   nonempty t := List.ne_nil_of_length_pos (by
                   rw [t.solo]; decide)
   physical   := rfl
--- ANCHOR_END: instances
+-- ANCHOR_END: others
 
 -- ANCHOR: call-physical
 /--
 error: Tactic `decide` proved that the proposition
-  (EventClass.kind Call).physical = true
+  (EventClass.kind CallR).physical = true
 is false
 -/
 #guard_msgs in
-example : Physical Call :=
+example : Physical CallR :=
   { physical := by decide }
 -- ANCHOR_END: call-physical
 
@@ -104,14 +106,16 @@ theorem EventClass.someone {α : Type} [EventClass α]
   cases h : (toEvent a).who with
   | nil => exact absurd h (nonempty a)
   | cons p _ => exact ⟨p, List.mem_cons_self⟩
+-- ANCHOR_END: shared-theorem
 
+-- ANCHOR: present
 open EventClass in
 /-- Members of an in-person class need presence. -/
 theorem Physical.present {α : Type} [Physical α]
     (a : α) : (toEvent a).kind.physical = true := by
   rw [kind_eq a]
   exact Physical.physical
--- ANCHOR_END: shared-theorem
+-- ANCHOR_END: present
 
 -- ANCHOR: one-city
 open EventClass in
@@ -139,14 +143,15 @@ theorem Physical.oneCity {α β : Type}
 
 -- ANCHOR: smart
 /-- Classify an untrusted event as a meeting. -/
-def Meeting.ofEvent? (e : Event) : Option Meeting :=
+def MeetingR.ofEvent? (e : Event) :
+    Option MeetingR :=
   if h₁ : e.kind = .meeting then
     if h₂ : 2 ≤ e.who.length then some ⟨e, h₁, h₂⟩
     else none
   else none
 
-def kickoffMeeting : Option Meeting :=
-  Meeting.ofEvent? kickoff
+def kickoffMeeting : Option MeetingR :=
+  MeetingR.ofEvent? kickoff
 -- ANCHOR_END: smart
 
 -- ANCHOR: solo
@@ -167,7 +172,7 @@ def solo : Event :=
 /-- info: (true, false) -/
 #guard_msgs in
 #eval (kickoffMeeting.isSome,
-       (Meeting.ofEvent? solo).isSome)
+       (MeetingR.ofEvent? solo).isSome)
 -- ANCHOR_END: solo
 
 -- ANCHOR: kind-law

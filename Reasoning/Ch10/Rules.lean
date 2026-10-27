@@ -6,7 +6,7 @@ import Reasoning.Ch10.Bridge
 The facts come from the Lean store through `memdb`
 (`Bridge.lean`). This module adds rules: colleagues,
 management chains, co-attendance, presence in a country,
-a bilocation check, and a small constraint solver.
+and a bilocation check with typed verdicts.
 -/
 
 open Elpi.Cmd
@@ -227,12 +227,14 @@ set_option elpi.solutions 10 in
 /-- info: P = anna, Id = 1 -/
 #guard_msgs in
 #elpi rules lp%{ suspicious P Id }%
+-- ANCHOR_END: clash-query
 
+-- Sanity check: no remembered event, proposed again,
+-- clashes with the certified store.
 /-- error: query has no solution -/
 #guard_msgs in
 #elpi rules lp%{ attended Id P, event Id K C S E,
                  clash (eventRow.mk 0 K [P] C S E) Q I }%
--- ANCHOR_END: clash-query
 
 -- ANCHOR: verdict-data
 elpi_data lp%{
@@ -247,7 +249,10 @@ elpi_accumulate rules lp%{
   pred verdict-of i:eventRow, o:verdict.
   verdict-of Ev (reject Id) :- clash Ev _ Id, !.
   verdict-of _ accept.
+}%
+-- ANCHOR_END: verdict
 
+elpi_accumulate rules lp%{
   % Re-judge every remembered event as if it were new.
   pred rejudge o:int, o:verdict.
   rejudge Id V :-
@@ -265,53 +270,5 @@ info: Id = 2, V = accept
 info: Id = 1, V = accept -/
 #guard_msgs in
 #elpi rules lp%{ rejudge Id V }%
--- ANCHOR_END: verdict
-
--- ANCHOR: before
-elpi_accumulate rules lp%{
-  constraint before {
-    rule (before X Y) (before Y X) <=> fail.
-    rule (before X Y) (before Y Z) <=> (before X Z).
-  }
-
-  pred before o:int, o:int.
-  before A B :- var A, !,
-    declare_constraint (before A B) [A].
-  before A B :- var B, !,
-    declare_constraint (before A B) [B].
-  before A B :- A < B.
-}%
--- ANCHOR_END: before
-
--- ANCHOR: story
-elpi_accumulate rules lp%{
-  pred story i:string.
-  story "chain" :- before K R, before R T.
-  story "cycle" :- before K R, before R T, before T K.
-  story "dated" :-
-    before K T, event 1 _ _ K _, event 3 _ _ T _.
-  story "backwards" :-
-    before T K, event 1 _ _ K _, event 3 _ _ T _.
-}%
-
-/-- info:
- before X0 X1  /* suspended on X0 */
- before X2 X1  /* suspended on X2 */
- before X0 X2  /* suspended on X0 */ -/
-#guard_msgs in
-#elpi rules lp%{ story "chain" }%
-
-/-- error: query has no solution -/
-#guard_msgs in
-#elpi rules lp%{ story "cycle" }%
-
-/-- info: true -/
-#guard_msgs in
-#elpi rules lp%{ story "dated" }%
-
-/-- error: query has no solution -/
-#guard_msgs in
-#elpi rules lp%{ story "backwards" }%
--- ANCHOR_END: story
 
 end Ch10

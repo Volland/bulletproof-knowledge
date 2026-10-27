@@ -3,9 +3,15 @@ import Knowledge.Memory
 /-!
 # Chapter 3: reasoning with the graph
 
-Reachability as an inductive relation, proofs of
-concrete paths, and a checker that answers "yes" or
-"no" with a proof either way.
+Reachability as an inductive relation, a proof of a
+concrete path, and a checker that answers "yes" or "no"
+with a proof either way.
+
+The vertices are people to keep the book's code free of
+type-class arguments. Nothing below depends on that
+choice: any vertex type with decidable equality works.
+Chapter 2's `Chain` is the non-reflexive cousin of
+`Reach` (one or more steps instead of zero or more).
 -/
 
 namespace Ch03
@@ -13,12 +19,12 @@ namespace Ch03
 open Memory
 
 -- ANCHOR: graph
-/-- A directed graph as a list of edges. -/
-abbrev Graph (α : Type) := List (α × α)
+/-- A directed graph of people: a list of edges. -/
+abbrev Graph := List (Person × Person)
 
 /-- Who talked to whom: every ordered pair of
     distinct people at the same event. -/
-def talked (s : Store) : Graph Person :=
+def talked (s : Store) : Graph :=
   s.events.flatMap fun e =>
     e.who.flatMap fun p =>
       (e.who.filter (· ≠ p)).map fun q => (p, q)
@@ -32,13 +38,13 @@ def talked (s : Store) : Graph Person :=
 -- ANCHOR_END: graph
 
 -- ANCHOR: reach
-/-- `Reach g a b`: there is a path from `a` to `b`. -/
-inductive Reach {α : Type} (g : Graph α) :
-    α → α → Prop where
-  /-- every vertex reaches itself -/
-  | here (a : α) : Reach g a a
+/-- `Reach g a b`: a path leads from `a` to `b`. -/
+inductive Reach (g : Graph) :
+    Person → Person → Prop where
+  /-- everyone reaches themselves: zero steps -/
+  | here (a : Person) : Reach g a a
   /-- take one edge, then keep going -/
-  | step {a b c : α} :
+  | step (a b c : Person) :
       (a, b) ∈ g → Reach g b c → Reach g a c
 -- ANCHOR_END: reach
 
@@ -47,45 +53,41 @@ inductive Reach {α : Type} (g : Graph α) :
     Marco talked to Anna, Anna talked to Taras. -/
 theorem marco_reaches_taras :
     Reach (talked World.store) .marco .taras :=
-  .step (b := .anna) (by decide)
-    (.step (b := .taras) (by decide)
-      (.here _))
+  .step .marco .anna .taras (by decide)
+    (.step .anna .taras .taras (by decide)
+      (.here .taras))
 -- ANCHOR_END: path_proof
 
-section
-variable {α : Type}
-
--- ANCHOR: snoc
 /-- A path can be extended by one edge at the end. -/
-theorem Reach.snoc {g : Graph α} {a b c : α}
+theorem Reach.snoc (g : Graph) (a b c : Person)
     (h : Reach g a b) (e : (b, c) ∈ g) :
     Reach g a c := by
   induction h with
-  | here => exact .step e (.here _)
-  | step e' _ ih => exact .step e' (ih e)
--- ANCHOR_END: snoc
+  | here => exact .step _ _ _ e (.here _)
+  | step _ _ _ e' _ ih => exact .step _ _ _ e' (ih e)
 
--- ANCHOR: closure
+-- ANCHOR: reachable
 /-- One round: add every target of an edge
     whose source is already in `S`. -/
-def expand [DecidableEq α] (g : Graph α)
-    (S : List α) : List α :=
+def expand (g : Graph) (S : List Person) :
+    List Person :=
   S ++ (g.filter fun p => p.1 ∈ S).map (·.2)
 
 /-- Repeat `n` rounds, starting from `S`. -/
-def closure [DecidableEq α] (g : Graph α) :
-    Nat → List α → List α
+def reachable (g : Graph) :
+    Nat → List Person → List Person
   | 0,     S => S
-  | n + 1, S => closure g n (expand g S)
--- ANCHOR_END: closure
+  | n + 1, S => reachable g n (expand g S)
+-- ANCHOR_END: reachable
 
 -- ANCHOR: sound
-/-- Everything the closure collects is reachable. -/
-theorem closure_sound [DecidableEq α]
-    {g : Graph α} {a : α} :
-    ∀ (n : Nat) (S : List α),
+/-- Everything `reachable` collects is reachable. -/
+theorem reachable_sound (g : Graph) (a : Person) :
+    ∀ (n : Nat) (S : List Person),
       (∀ x ∈ S, Reach g a x) →
-      ∀ x ∈ closure g n S, Reach g a x := by
+      ∀ x ∈ reachable g n S, Reach g a x
+-- ANCHOR_END: sound
+    := by
   intro n
   induction n with
   | zero => intro S h; exact h
@@ -98,13 +100,16 @@ theorem closure_sound [DecidableEq α]
       decide_eq_true_eq] at hx
     rcases hx with hx | ⟨⟨y, z⟩, ⟨he, hy⟩, rfl⟩
     · exact h x hx
-    · exact (h y hy).snoc he
--- ANCHOR_END: sound
+    · exact Reach.snoc _ _ _ _ (h y hy) he
 
-theorem closure_keeps [DecidableEq α]
-    {g : Graph α} {a : α} :
-    ∀ (n : Nat) (S : List α),
-      a ∈ S → a ∈ closure g n S := by
+-- ANCHOR: sound
+
+/-- The starting person is never dropped. -/
+theorem reachable_keeps (g : Graph) (a : Person) :
+    ∀ (n : Nat) (S : List Person),
+      a ∈ S → a ∈ reachable g n S
+-- ANCHOR_END: sound
+    := by
   intro n
   induction n with
   | zero => intro S h; exact h
@@ -112,83 +117,97 @@ theorem closure_keeps [DecidableEq α]
     intro S h
     exact ih _ (List.mem_append_left _ h)
 
--- ANCHOR: closed
-/-- `S` is closed: no edge leaves it. -/
-def Closed (g : Graph α) (S : List α) : Prop :=
+-- ANCHOR: sealed
+/-- `S` is sealed: no edge leaves it. -/
+abbrev Sealed (g : Graph) (S : List Person) : Prop :=
   ∀ p ∈ g, p.1 ∈ S → p.2 ∈ S
 
-instance [DecidableEq α] (g : Graph α) (S : List α) :
-    Decidable (Closed g S) := by
-  unfold Closed; infer_instance
-
-/-- If `a` is inside a closed set and `b` is
+/-- If `a` is inside a sealed set and `b` is
     outside it, no path leads from `a` to `b`. -/
-theorem not_reach_of_closed {g : Graph α}
-    {S : List α} {a b : α} (hc : Closed g S)
-    (ha : a ∈ S) (hb : b ∉ S) : ¬ Reach g a b := by
-  intro h
+theorem not_reach_of_sealed (g : Graph)
+    (S : List Person) (a b : Person) :
+    Sealed g S → a ∈ S → b ∉ S → ¬ Reach g a b
+-- ANCHOR_END: sealed
+    := by
+  intro hs ha hb h
   induction h with
   | here => exact hb ha
-  | step e _ ih => exact ih (hc _ e ha) hb
--- ANCHOR_END: closed
+  | step _ _ _ e _ ih => exact ih (hs _ e ha) hb
+
+/-- The start reaches itself (helper for `check`). -/
+theorem start_reaches (g : Graph) (a : Person) :
+    ∀ x ∈ [a], Reach g a x := by
+  intro x hx
+  simp at hx
+  subst hx
+  exact .here _
+
+/-- The start is collected (helper for `check`). -/
+theorem start_kept (g : Graph) (a : Person)
+    (n : Nat) : a ∈ reachable g n [a] :=
+  reachable_keeps g a n [a] (by simp)
 
 -- ANCHOR: verdict
-/-- An answer that carries its evidence. -/
-inductive Verdict (P : Prop) where
-  | yes (h : P)
-  | no  (h : ¬ P)
+/-- An answer to "does `a` reach `b`?" that
+    carries its evidence. -/
+inductive Verdict (g : Graph) (a b : Person) where
+  | yes (h : Reach g a b)
+  | no  (h : ¬ Reach g a b)
   | gaveUp
 
-def Verdict.show {P : Prop} : Verdict P → String
-  | .yes _  => "yes, with a path"
-  | .no _   => "no, with a closed set"
-  | .gaveUp => "out of fuel"
-
 /-- Decide reachability on a finite graph. -/
-def check [DecidableEq α] (g : Graph α) (a b : α) :
-    Verdict (Reach g a b) :=
-  let S := closure g (g.length + 1) [a]
+def check (g : Graph) (a b : Person) :
+    Verdict g a b :=
+  let S := reachable g (g.length + 1) [a]
   if hb : b ∈ S then
-    .yes (closure_sound _ [a]
-      (by simp; exact .here a) b hb)
-  else if hc : Closed g S then
-    .no (not_reach_of_closed hc
-      (closure_keeps _ _ (by simp)) hb)
+    .yes (reachable_sound g a _ [a]
+      (start_reaches g a) b hb)
+  else if hs : Sealed g S then
+    .no (not_reach_of_sealed g S a b hs
+      (start_kept g a _) hb)
   else .gaveUp
 -- ANCHOR_END: verdict
 
-end
+/-- A verdict as text. The proofs are erased at run
+    time, so there is no path left to print. -/
+def Verdict.show {g : Graph} {a b : Person} :
+    Verdict g a b → String
+  | .yes _  => "yes, with a path"
+  | .no _   => "no, with a sealed set"
+  | .gaveUp => "out of fuel"
 
 -- ANCHOR: ask
 /-- info: "yes, with a path" -/
 #guard_msgs in
 #eval (check (talked World.store) .marco .taras).show
 
-/-- info: "no, with a closed set" -/
+/-- info: "no, with a sealed set" -/
 #guard_msgs in
 #eval (check (talked World.store) .marco .lena).show
 -- ANCHOR_END: ask
 
 -- ANCHOR: lena
-/-- Nobody the agent recorded ever talked to Lena.
-    The closed set `[marco, anna, taras]` is the
-    whole proof; `decide` checks its three sides. -/
+/-- Nobody the agent recorded ever talked to Lena. -/
 theorem marco_not_reaches_lena :
     ¬ Reach (talked World.store) .marco .lena :=
-  not_reach_of_closed
-    (S := [.marco, .anna, .taras])
-    (by decide) (by decide) (by decide)
+  not_reach_of_sealed _ [.marco, .anna, .taras]
+    .marco .lena (by decide) (by decide) (by decide)
 -- ANCHOR_END: lena
 
 -- ANCHOR: chain
-/-- Management chains: the transitive part of
-    `reportsTo`, read as a graph. -/
-def manages (s : Store) : Graph Person :=
+/-- The reporting graph: an edge from each person
+    to their manager, so `(taras, lena)` reads
+    "Taras reports to Lena". -/
+def reportsGraph (s : Store) : Graph :=
   s.reportsTo
 
-/-- info: "no, with a closed set" -/
+/-- info: "yes, with a path" -/
 #guard_msgs in
-#eval (check (manages World.store) .taras .anna).show
+#eval (check (reportsGraph World.store) .marco .anna).show
+
+/-- info: "no, with a sealed set" -/
+#guard_msgs in
+#eval (check (reportsGraph World.store) .taras .anna).show
 -- ANCHOR_END: chain
 
 end Ch03

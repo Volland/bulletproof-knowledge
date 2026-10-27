@@ -58,16 +58,13 @@ theorem kickoff_not_remote : ¬ Remote kickoff := by
 theorem back_to_back (i j : Interval)
     (h : i.stop ≤ j.start) : ¬ Interval.Overlaps i j := by
   intro ho
-  have h₁ : j.start < j.start :=
-    Nat.lt_of_lt_of_le ho.2 h
-  exact Nat.lt_irrefl _ h₁
+  exact Nat.lt_irrefl _ (Nat.lt_of_lt_of_le ho.2 h)
 
-/-- The same proof with `omega`, after unfolding `Time`. -/
+/-- The same with `omega`, after unfolding `Overlaps`
+    and the abbreviation `Time`. -/
 theorem back_to_back' (i j : Interval)
     (h : i.stop ≤ j.start) : ¬ Interval.Overlaps i j := by
-  intro ho
-  have h₂ := ho.2
-  simp only [Time] at *
+  simp only [Interval.Overlaps, Time] at *
   omega
 
 /-! ## Exercise 6.5 — Induction over memories -/

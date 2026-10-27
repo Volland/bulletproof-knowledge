@@ -60,9 +60,13 @@ def shiftAll (d : Nat) (s : Store) : Store :=
 -- ANCHOR_END: shift
 
 -- ANCHOR: shift_safe
+/-- Moving every event `d` minutes later keeps a
+    consistent store consistent. -/
 theorem shiftAll_consistent (d : Nat) (s : Store)
     (c : Consistent s) :
     Consistent (shiftAll d s) where
+  -- proof: one answer per axiom
+-- ANCHOR_END: shift_safe
   bornBefore := by
     intro e' he' p hp
     simp only [shiftAll, List.mem_map] at he'
@@ -81,6 +85,8 @@ theorem shiftAll_consistent (d : Nat) (s : Store)
     have hid : (·.id) ∘ shiftEvent d = (·.id) := rfl
     simp only [UniqueIds, shiftAll, List.map_map, hid]
     exact c.uniqueIds
+
+-- ANCHOR: shift_safe
 
 def shift (d : Nat) : SafeUpdate :=
   ⟨shiftAll d, shiftAll_consistent d⟩
@@ -127,6 +133,8 @@ theorem merge_bornBefore {a b : Person} {s : Store}
     (hab : s.born a ≤ s.born b)
     (h : BornBefore s) :
     BornBefore (merge a b s) := by
+  -- proof: each attendee is `into a b q`, old `q`
+-- ANCHOR_END: merge_partial
   intro e' he' p hp
   simp only [merge, List.mem_map] at he'
   obtain ⟨e, he, rfl⟩ := he'
@@ -137,7 +145,6 @@ theorem merge_bornBefore {a b : Person} {s : Store}
   split
   · subst q; exact Nat.le_trans hab this
   · exact this
--- ANCHOR_END: merge_partial
 
 -- ANCHOR: checked
 /-- An update without a proof goes through the same

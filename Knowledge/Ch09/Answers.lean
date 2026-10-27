@@ -82,33 +82,34 @@ example : verdict (memory.insert phantom) = none := by
 
 -- ANCHOR: question
 /-- "Was `p` physically in city `c`?" -/
-def WasIn (s : Store) (p : Person) (c : City) : Prop :=
+def WasInCity (s : Store) (p : Person) (c : City) :
+    Prop :=
   ∃ e ∈ s.events,
     p ∈ e.who ∧ e.place = c ∧ e.kind.physical = true
 
 instance (s : Store) (p : Person) (c : City) :
-    Decidable (WasIn s p c) := by
-  unfold WasIn; infer_instance
+    Decidable (WasInCity s p c) := by
+  unfold WasInCity; infer_instance
 -- ANCHOR_END: question
 
 -- ANCHOR: answer_term
 /-- Yes, and here is the event. -/
-theorem anna_in_lisbon : WasIn store .anna .lisbon :=
+theorem anna_in_lisbon : WasInCity store .anna .lisbon :=
   ⟨kickoff, by decide, by decide, rfl, rfl⟩
 -- ANCHOR_END: answer_term
 
 -- ANCHOR: answer_wrong
 /--
 error: Tactic `decide` proved that the proposition
-  WasIn store Person.anna City.kyiv
+  WasInCity store Person.anna City.kyiv
 is false
 -/
 #guard_msgs in
-example : WasIn store .anna .kyiv := by decide
+example : WasInCity store .anna .kyiv := by decide
 
 /-- No: a closed-world "no", with a proof. -/
 theorem anna_not_in_kyiv :
-    ¬ WasIn store .anna .kyiv := by decide
+    ¬ WasInCity store .anna .kyiv := by decide
 -- ANCHOR_END: answer_wrong
 
 -- ANCHOR: certified_answer
@@ -160,7 +161,7 @@ instance (p : Person) (c : City) :
 /-- A certified answer is a proof of the question. -/
 theorem Answer.sound {s : Store} {p : Person}
     {c : City} (a : Answer s (inCity p c)) :
-    WasIn s p c :=
+    WasInCity s p c :=
   ⟨a.event, a.mem, a.holds⟩
 -- ANCHOR_END: answer_sound
 

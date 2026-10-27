@@ -47,9 +47,9 @@ elpi_accumulate ch11_hyp lp%{
   met X Y :- attended E X, ev E meeting _ _ _,
              attended E Y, not (X = Y).
 
-  pred above o:person, o:person.
-  above X Y :- reports X Y.
-  above X Z :- reports X Y, above Y Z.
+  pred under o:person, o:person.
+  under X Y :- reports X Y.
+  under X Z :- reports X Y, under Y Z.
 }%
 -- ANCHOR_END: rules
 
@@ -70,19 +70,19 @@ elpi_accumulate ch11_hyp lp%{
 -- ANCHOR: counterfactual
 /-- info: true -/
 #guard_msgs in
-#elpi ch11_hyp lp%{ reports anna lena => above marco lena }%
+#elpi ch11_hyp lp%{ reports anna lena => under marco lena }%
 
 /-- error: query has no solution -/
 #guard_msgs in
-#elpi ch11_hyp lp%{ above marco lena }%
+#elpi ch11_hyp lp%{ under marco lena }%
 -- ANCHOR_END: counterfactual
 
 -- ANCHOR: collect
 elpi_accumulate ch11_hyp lp%{
-  % everyone above P, as a list
+  % everyone P is under, as a list
   pred bosses i:person, o:list person.
-  bosses P L :- std.findall (above P _) Sols,
-                std.map Sols (s\ y\ s = above _ y) L.
+  bosses P L :- std.findall (under P _) Sols,
+                std.map Sols (s\ y\ s = under _ y) L.
 }%
 
 /-- info: L = [anna, lena] -/
@@ -146,7 +146,7 @@ elpi_accumulate ch11_hyp lp%{
 /-- info: true -/
 #guard_msgs in
 #elpi ch11_hyp lp%{
-  pi x\ reports x marco => above x anna }%
+  pi x\ reports x marco => under x anna }%
 
 /-- info: true -/
 #guard_msgs in
@@ -157,7 +157,7 @@ elpi_accumulate ch11_hyp lp%{
 -- ANCHOR: generic_fail
 /-- error: query has no solution -/
 #guard_msgs in
-#elpi ch11_hyp lp%{ pi x\ above x anna }%
+#elpi ch11_hyp lp%{ pi x\ under x anna }%
 -- ANCHOR_END: generic_fail
 
 end Ch11

@@ -17,22 +17,25 @@ open Memory Memory.World Interval
 /-- The new rule: a call has at least two people. -/
 def CallsHaveTwo (s : Store) : Prop :=
   ∀ e ∈ s.events, e.kind = .call → 2 ≤ e.who.length
+-- ANCHOR_END: new_axiom
 
 instance (s : Store) : Decidable (CallsHaveTwo s) := by
   unfold CallsHaveTwo; infer_instance
+
+-- ANCHOR: new_axiom
 
 /-- Version 2 of the ontology: the old axioms plus
     the new one. -/
 structure ConsistentV2 (s : Store) : Prop where
   old   : Consistent s
   calls : CallsHaveTwo s
+-- ANCHOR_END: new_axiom
 
 instance (s : Store) : Decidable (ConsistentV2 s) :=
   if h₁ : Consistent s then
     if h₂ : CallsHaveTwo s then isTrue ⟨h₁, h₂⟩
     else isFalse fun c => h₂ c.calls
   else isFalse fun c => h₁ c.old
--- ANCHOR_END: new_axiom
 
 -- ANCHOR: migration
 /-- An ontology, for this chapter: which stores
@@ -92,11 +95,12 @@ def dropSolo (s : Store) : Store :=
 theorem dropSolo_safe :
     Safe Consistent ConsistentV2 dropSolo := by
   intro s c
-  refine ⟨consistent_of_sublist c List.filter_sublist, ?_⟩
-  intro e he hk
-  simp only [dropSolo, List.mem_filter] at he
-  simp [soloCall, hk] at he
-  omega
+  constructor
+  · exact consistent_of_sublist c List.filter_sublist
+  · intro e he hk
+    simp only [dropSolo, List.mem_filter] at he
+    simp [soloCall, hk] at he
+    omega
 -- ANCHOR_END: drop_solo
 
 -- ANCHOR: drop_eval
@@ -112,8 +116,8 @@ def retag (s : Store) : Store :=
       if soloCall e then { e with kind := .talk }
       else e }
 
-/-- Marco's voicemail, from Lisbon, during a Kyiv
-    meeting he attended. -/
+/-- A Kyiv meeting Marco attended during his
+    voicemail. -/
 def kyivSync : Event :=
   { id := 4, kind := .meeting
     who := [.marco, .lena], place := .kyiv

@@ -12,8 +12,9 @@ namespace Ch06
 open Memory Memory.World
 
 -- ANCHOR: rfl
-theorem porto_in_portugal :
-    City.porto.country = .portugal := by
+/-- The kickoff lasts sixty minutes. -/
+theorem kickoff_lasts_an_hour :
+    kickoff.span.stop - kickoff.span.start = 60 := by
   rfl
 -- ANCHOR_END: rfl
 
@@ -57,14 +58,24 @@ example :
   · rfl
 -- ANCHOR_END: unsolved
 
--- ANCHOR: cases-kind
-/-- Only a call can happen without physical presence. -/
-theorem only_calls_remote (k : EventKind)
-    (h : k.physical = false) : k = .call := by
-  cases k with
-  | call => rfl
-  | _    => contradiction
--- ANCHOR_END: cases-kind
+-- ANCHOR: cases-city
+/-- The agent knows two Portuguese cities. -/
+theorem portuguese_city (c : City)
+    (h : c.country = .portugal) :
+    c = .lisbon ∨ c = .porto := by
+  cases c with
+  | lisbon => exact Or.inl rfl
+  | porto  => exact Or.inr rfl
+  | _      => contradiction
+-- ANCHOR_END: cases-city
+
+-- ANCHOR: cases-all
+/-- Every known city lies in one of three countries. -/
+theorem three_countries (c : City) :
+    c.country = .ukraine ∨ c.country = .portugal ∨
+      c.country = .germany := by
+  cases c <;> decide
+-- ANCHOR_END: cases-all
 
 -- ANCHOR: cases-or
 /-- A meeting in Lisbon or Porto is in Portugal. -/
@@ -150,21 +161,21 @@ example (a b : Time) (h : a ≤ b) :
 -- ANCHOR_END: omega-time
 
 -- ANCHOR: decide
-/-- Lena was not at the kickoff: checked by
+/-- Marco was not on the review call: checked by
     evaluating the membership test. -/
-theorem lena_missed_kickoff :
-    ¬ Store.attended kickoff .lena := by
+theorem marco_missed_review :
+    ¬ Store.attended review .marco := by
   decide
 -- ANCHOR_END: decide
 
 -- ANCHOR: decide-false
 /--
 error: Tactic `decide` proved that the proposition
-  Store.attended kickoff Person.lena
+  Store.attended review Person.marco
 is false
 -/
 #guard_msgs in
-example : Store.attended kickoff .lena := by
+example : Store.attended review .marco := by
   decide
 -- ANCHOR_END: decide-false
 
@@ -176,21 +187,6 @@ theorem later_problem :
   sorry
 -- ANCHOR_END: sorry
 
--- ANCHOR: decidable-print
-/--
-info: class Decidable (p : Prop) : Type
-number of parameters: 1
-fields:
-  Decidable.decide : Bool
-  Decidable.reflects_decide : (decide p).Reflects p
-constructor:
-  Decidable.intro {p : Prop} (decide : Bool)
-    (reflects_decide : decide.Reflects p) : Decidable p
--/
-#guard_msgs (whitespace := lax) in
-#print Decidable
--- ANCHOR_END: decidable-print
-
 -- ANCHOR: decidable-eval
 /-- info: true -/
 #guard_msgs in
@@ -198,7 +194,7 @@ constructor:
 
 /-- info: false -/
 #guard_msgs in
-#eval decide (Store.attended kickoff .lena)
+#eval decide (Store.attended review .marco)
 -- ANCHOR_END: decidable-eval
 
 -- ANCHOR: held-in

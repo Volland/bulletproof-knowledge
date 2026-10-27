@@ -208,7 +208,9 @@ end
 def Chain (s : Store) : Person → List Person → Prop
   | p, []      => ∀ r ∈ s.reportsTo, r.1 ≠ p
   | p, m :: ms => (p, m) ∈ s.reportsTo ∧ Chain s m ms
+-- ANCHOR_END: chain
 
+/-- Decide `Chain` by walking the list, step by step. -/
 instance chainDec (s : Store) :
     (p : Person) → (ms : List Person) →
     Decidable (Chain s p ms)
@@ -217,7 +219,6 @@ instance chainDec (s : Store) :
   | p, m :: ms =>
     have := chainDec s m ms
     inferInstanceAs (Decidable ((p, m) ∈ s.reportsTo ∧ _))
--- ANCHOR_END: chain
 
 -- ANCHOR: cert
 /-- A certificate: a claim about the store `s`, a readable
