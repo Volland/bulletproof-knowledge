@@ -1,0 +1,8 @@
+{
+  "user": "Lena met Oksana from Lumen in Lviv on day 2004, 10:00 to 11:00.",
+  "replies": [
+    {"facts": [{"event": {"id": 7, "kind": "meeting", "who": ["lena", "oksana"], "place": "lviv", "day": 2004, "from": "10:00", "to": "11:00"}}]},
+    {"facts": [{"event": {"id": 7, "kind": "meeting", "who": ["lena"], "place": "lviv", "day": 2004, "from": "10:00", "to": "11:00"}}]}
+  ],
+  "expect": ["parse", "committed"]
+}

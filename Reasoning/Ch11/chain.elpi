@@ -1,0 +1,24 @@
+#lf
+% ANCHOR: people
+person : type.
+anna  : person.
+marco : person.
+lena  : person.
+taras : person.
+sofia : person.
+% ANCHOR_END: people
+
+% ANCHOR: reports
+reports : person -> person -> type.
+r_marco : reports marco anna.
+r_taras : reports taras lena.
+r_anna  : reports anna lena.  % after the reorg
+% ANCHOR_END: reports
+
+% ANCHOR: above
+above : person -> person -> type.
+above_one  : above X Y <- reports X Y.
+above_step : above X Z
+               <- reports X Y
+               <- above Y Z.
+% ANCHOR_END: above

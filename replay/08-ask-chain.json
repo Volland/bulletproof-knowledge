@@ -1,0 +1,7 @@
+{
+  "user": "Who is above Taras in the reporting line?",
+  "replies": [
+    {"ask": {"chain": "taras"}}
+  ],
+  "expect": ["yes"]
+}

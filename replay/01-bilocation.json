@@ -1,0 +1,8 @@
+{
+  "user": "Anna and Lena met in Berlin on day 2001, from 10:00 to 12:00.",
+  "replies": [
+    {"facts": [{"event": {"id": 3, "kind": "meeting", "who": ["anna", "lena"], "place": "berlin", "day": 2000, "from": "10:00", "to": "12:00"}}]},
+    {"facts": [{"event": {"id": 3, "kind": "meeting", "who": ["anna", "lena"], "place": "berlin", "day": 2001, "from": "10:00", "to": "12:00"}}]}
+  ],
+  "expect": ["NoBilocation", "committed"]
+}

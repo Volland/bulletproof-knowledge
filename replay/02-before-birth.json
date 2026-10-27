@@ -1,0 +1,8 @@
+{
+  "user": "On day 900 Marco gave a talk in Porto, 14:00 to 15:00, about the project that Sofia leads now.",
+  "replies": [
+    {"facts": [{"event": {"id": 4, "kind": "talk", "who": ["marco", "sofia"], "place": "porto", "day": 900, "from": "14:00", "to": "15:00"}}]},
+    {"facts": [{"event": {"id": 4, "kind": "talk", "who": ["marco"], "place": "porto", "day": 900, "from": "14:00", "to": "15:00"}}]}
+  ],
+  "expect": ["BornBefore", "committed"]
+}

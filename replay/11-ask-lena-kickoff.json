@@ -1,0 +1,7 @@
+{
+  "user": "Did Lena attend the kickoff?",
+  "replies": [
+    {"ask": {"attended": {"person": "lena", "event": 1}}}
+  ],
+  "expect": ["no"]
+}

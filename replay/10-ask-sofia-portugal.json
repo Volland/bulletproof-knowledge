@@ -1,0 +1,7 @@
+{
+  "user": "Has Sofia ever been to Portugal?",
+  "replies": [
+    {"ask": {"wasIn": {"person": "sofia", "country": "portugal"}}}
+  ],
+  "expect": ["no"]
+}

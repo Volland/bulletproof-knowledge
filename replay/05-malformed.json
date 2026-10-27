@@ -1,0 +1,9 @@
+{
+  "user": "Anna and Marco met in Porto on day 2003, from 3 pm to 4:30 pm.",
+  "replies": [
+    "Sure! Here is the event you asked for: {\"facts\": [{\"event\": {\"id\": 6, \"kind\": \"meeting\", \"who\": [\"anna\", \"marco\"], \"place\": \"porto\", \"day\": 2003, \"from\": \"15:00\", \"to\": \"16:30\"}}]}",
+    {"facts": [{"event": {"id": 6, "kind": "meeting", "who": ["anna", "marco"], "place": "porto", "day": 2003, "from": "15:00", "to": "04:30"}}]},
+    {"facts": [{"event": {"id": 6, "kind": "meeting", "who": ["anna", "marco"], "place": "porto", "day": 2003, "from": "15:00", "to": "16:30"}}]}
+  ],
+  "expect": ["parse", "parse", "committed"]
+}

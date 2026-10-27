@@ -1,0 +1,19 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          # every #guard_msgs in the book's code is checked by the build
+          build: true
+          test: false
+          lint: false
+      - name: Run the Chapter 12 agent in replay mode
+        run: lake exe agent

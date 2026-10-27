@@ -1,0 +1,7 @@
+{
+  "user": "Whom has Anna met in person?",
+  "replies": [
+    {"ask": {"met": "anna"}}
+  ],
+  "expect": ["yes"]
+}

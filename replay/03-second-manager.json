@@ -1,0 +1,8 @@
+{
+  "user": "Lena's team, Lena included, now sits under Anna.",
+  "replies": [
+    {"facts": [{"reportsTo": {"person": "lena", "manager": "anna"}}, {"reportsTo": {"person": "taras", "manager": "anna"}}]},
+    {"facts": [{"reportsTo": {"person": "lena", "manager": "anna"}}]}
+  ],
+  "expect": ["SingleManager", "committed"]
+}

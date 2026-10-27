@@ -1,0 +1,8 @@
+{
+  "user": "After the review, Taras had a follow-up call with Lena on day 2000, 11:00 to 11:30.",
+  "replies": [
+    {"facts": [{"event": {"id": 2, "kind": "call", "who": ["taras", "lena"], "place": "kyiv", "day": 2000, "from": "11:00", "to": "11:30"}}]},
+    {"facts": [{"event": {"id": 5, "kind": "call", "who": ["taras", "lena"], "place": "kyiv", "day": 2000, "from": "11:00", "to": "11:30"}}]}
+  ],
+  "expect": ["UniqueIds", "committed"]
+}
