@@ -171,11 +171,13 @@ def clock (s : String) : Parse Nat :=
     | _, _ => throw (.badClock s)
   | _ => throw (.badClock s)
 
+-- ANCHOR: interval
 /-- The only way to get an `Interval` is to supply the
     proof `start ≤ stop`; `if h : …` produces it. -/
 def interval (start stop : Time) : Parse Interval :=
   if h : start ≤ stop then pure ⟨start, stop, h⟩
   else throw (.badSpan start stop)
+-- ANCHOR_END: interval
 -- ANCHOR_END: span
 
 -- ANCHOR: event

@@ -141,11 +141,13 @@ def ParseError.reason (e : ParseError) : String :=
     | _ => ""
   s!"UNPARSABLE: {e.explain}.{hint}"
 
+-- ANCHOR: instruction
 /-- Appended to every reason before it goes to the LLM. -/
 def instruction : String :=
   "Nothing was recorded. Reply with one corrected JSON \
    object and no other text. Leave out anything the \
    user's message does not state."
+-- ANCHOR_END: instruction
 -- ANCHOR_END: feedback
 
 /-! ## Claims the agent may make -/

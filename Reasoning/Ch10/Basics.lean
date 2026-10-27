@@ -20,12 +20,12 @@ elpi_accumulate office lp%{
   type anna, marco, lena, taras, sofia person.
 
   kind org type.
-  type acme, lumen, kyivtech org.
+  type acme, lumen, kyivTech org.
 
   pred works-at o:person, o:org.
   works-at anna acme.
   works-at marco acme.
-  works-at taras kyivtech.
+  works-at taras kyivTech.
   works-at lena lumen.
 
   pred reports-to o:person, o:person.

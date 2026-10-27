@@ -152,6 +152,10 @@ def whoIsThere : Person := City.lisbon
 /-- error: Unknown constant `Memory.Person.ana` -/
 #guard_msgs in
 #eval Person.ana
+
+/-- error: Unknown identifier `kickof` -/
+#guard_msgs in
+#eval kickof
 -- ANCHOR_END: err-unknown
 
 end Ch06

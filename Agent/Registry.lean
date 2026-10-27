@@ -2,10 +2,10 @@
 # An open set of people
 
 `Memory.Person` is a closed inductive: a new person means a
-new constructor and a recompile. Chapter 4 promised the
+new constructor and a recompile. Chapter 7 sketched the
 production alternative: typed identifiers plus a proof that
-each identifier is registered in the store. This module is a
-small sketch of it. The certified-insert pattern does not
+each identifier is registered. This module turns that into
+a store axiom. The certified-insert pattern does not
 change; only the axiom does.
 -/
 

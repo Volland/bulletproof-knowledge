@@ -66,6 +66,31 @@ example : City.berlin.country = .portugal := by
   decide
 -- ANCHOR_END: prop_bad
 
+-- ANCHOR: rfl
+/-- `rfl`: both sides compute to the same value. -/
+example : City.lisbon.country = .portugal := rfl
+-- ANCHOR_END: rfl
+
+-- ANCHOR: anon
+/-- `⟨…⟩` fills the fields in order. -/
+def marcoInLisbon : Visit :=
+  ⟨.marco, .lisbon, .inPerson⟩
+
+/-- Two claims joined by `∧`: one proof for each. -/
+example : City.lisbon.country = .portugal ∧
+    City.berlin.country = .germany :=
+  ⟨rfl, rfl⟩
+-- ANCHOR_END: anon
+
+-- ANCHOR: abbrev
+/-- A `def` that Lean looks through when it needs to. -/
+abbrev InPortugal (c : City) : Prop :=
+  c.country = .portugal
+
+/-- `decide` sees the equation behind the name. -/
+example : InPortugal .porto := by decide
+-- ANCHOR_END: abbrev
+
 -- ANCHOR: option
 /-- Read a city name; `none` if we do not know it. -/
 def cityOf? : String → Option City

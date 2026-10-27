@@ -46,12 +46,15 @@ elpi_accumulate ch11_hyp lp%{
   pred met o:person, o:person.
   met X Y :- attended E X, ev E meeting _ _ _,
              attended E Y, not (X = Y).
+}%
+-- ANCHOR_END: rules
 
+-- the reporting chain, used by the generic query below
+elpi_accumulate ch11_hyp lp%{
   pred under o:person, o:person.
   under X Y :- reports X Y.
   under X Z :- reports X Y, under Y Z.
 }%
--- ANCHOR_END: rules
 
 /-! ## Assume, ask, forget -/
 
@@ -148,10 +151,12 @@ elpi_accumulate ch11_hyp lp%{
 #elpi ch11_hyp lp%{
   pi x\ reports x marco => under x anna }%
 
+-- ANCHOR: generic_met
 /-- info: true -/
 #guard_msgs in
 #elpi ch11_hyp lp%{
   pi x\ attended 1 x => met x anna }%
+-- ANCHOR_END: generic_met
 -- ANCHOR_END: generic
 
 -- ANCHOR: generic_fail

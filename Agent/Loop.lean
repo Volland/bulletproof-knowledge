@@ -189,6 +189,7 @@ def answerWasIn (r : Reasoner) (s : Store) (p : Person)
     | some k =>
       return .yes s!"Yes: {pn} was in {cn} during #{i}." [k]
     | none   => return .unknown "ELPI's witness did not check"
+  -- ANCHOR: was_in_no
   | [] =>
     -- negation as failure is not a proof; the closed
     -- world plus a decision procedure is
@@ -201,6 +202,7 @@ def answerWasIn (r : Reasoner) (s : Store) (p : Person)
       return .no s!"No: no recorded event puts {pn} \
                     in {cn}." k
     | none => return .unknown "the search missed an event"
+  -- ANCHOR_END: was_in_no
 -- ANCHOR_END: answer_was_in
 
 def answerChain (r : Reasoner) (s : Store) (p : Person) :

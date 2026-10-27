@@ -168,8 +168,7 @@ info: [(Memory.Person.anna, Memory.Person.anna),
 def dailyCall (n : Nat) : Event :=
   { id := 100 + n, kind := .call
     who := [.anna, .lena], place := .kyiv
-    span := ⟨day 3000 + 30 * n,
-             day 3000 + 30 * n + 15,
+    span := ⟨day (3000 + n), day (3000 + n) + 15,
              Nat.le_add_right _ _⟩ }
 
 /-- Our store plus `n` daily calls. -/

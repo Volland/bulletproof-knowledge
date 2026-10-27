@@ -248,8 +248,12 @@ elpi_data lp%{
 elpi_accumulate rules lp%{
   pred verdict-of i:eventRow, o:verdict.
   verdict-of Ev (reject Id) :- clash Ev _ Id, !.
-  verdict-of _ accept.
+  verdict-of Ev accept :- not (clash Ev _ _).
 }%
+
+/-- error: query has no solution -/
+#guard_msgs in
+#elpi rules lp%{ mem.proposed Ev, verdict-of Ev accept }%
 -- ANCHOR_END: verdict
 
 elpi_accumulate rules lp%{

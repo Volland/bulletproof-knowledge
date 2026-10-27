@@ -13,23 +13,29 @@ namespace Solutions.Ch08
 open Memory Memory.World
 open _root_.Ch08
 
-/-! ## Exercise 8.1 — calls as a subtype -/
+/-! ## Exercise 8.1 — two subclasses, one link -/
 
-def CallEv := { e : Event // e.kind = .call }
+/-- Every meeting is in person: a link between two
+    subclasses, proven once with `MeetingEv.physical`. -/
+def MeetingEv.toInPerson (m : MeetingEv) : InPerson :=
+  ⟨m, MeetingEv.physical m⟩
 
-instance : Coe CallEv Event := ⟨Subtype.val⟩
+instance : Coe MeetingEv InPerson := ⟨MeetingEv.toInPerson⟩
 
-def reviewC : CallEv := ⟨review, rfl⟩
-
-theorem CallEv.remote (c : CallEv) :
-    (c : Event).kind.physical = false := by
-  show c.val.kind.physical = false
-  rw [c.property]
-  rfl
-
-/-- info: Memory.City.kyiv -/
+/-- info: Memory.City.lisbon -/
 #guard_msgs in
-#eval placeOf reviewC
+#eval Located.place (kickoffM : InPerson)
+
+/-- The same class as an `abbrev`: instance search sees
+    the subtype, so the generic subtype instance applies
+    and no `inferInstanceAs` is needed. -/
+abbrev InPersonA := { e : Event // e.kind.physical = true }
+
+def kickoffA : InPersonA := ⟨kickoff, rfl⟩
+
+/-- info: Memory.City.lisbon -/
+#guard_msgs in
+#eval Located.place kickoffA
 
 /-! ## Exercise 8.2 — a class with a host -/
 

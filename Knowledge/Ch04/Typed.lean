@@ -235,6 +235,23 @@ def orgMemory : OrgMemory :=
 #eval orgMemory.hq .acme
 -- ANCHOR_END: owl_abox
 
+-- ANCHOR: owl_reject
+/--
+error: Application type mismatch: The argument
+  City.lisbon
+has type
+  City
+but is expected to have type
+  Person
+in the application
+  Prod.mk City.lisbon
+-/
+#guard_msgs in
+def hookAbox : OrgMemory :=
+  { worksAt := [(City.lisbon, Person.anna)]
+    hq      := knownHq }
+-- ANCHOR_END: owl_reject
+
 -- ANCHOR: counterexample
 /-- A draft axiom: "every physical event
     is a meeting". -/

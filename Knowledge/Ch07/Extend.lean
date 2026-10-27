@@ -203,15 +203,39 @@ def registry : Registry :=
 
 def oksana : PersonId := ⟨"oksana"⟩
 
-/-- Registering Oksana: a function call on data. -/
-def grown : Registry :=
-  (registry.register oksana).getD registry
+/-- Registering Oksana: a function call on data. The
+    result stays an `Option`, so a refusal stays visible. -/
+def grown? : Option Registry :=
+  registry.register oksana
 
-/-- info: (false, true, true) -/
+/-- info: (false, some true, true) -/
 #guard_msgs in
 #eval ((registry.find? oksana).isSome,
-       (grown.find? oksana).isSome,
-       (grown.register ⟨"anna"⟩).isNone)
+       grown?.map (fun g => (g.find? oksana).isSome),
+       (registry.register ⟨"anna"⟩).isNone)
+
+-- A capital letter makes a second "Anna".
+/-- info: true -/
+#guard_msgs in
+#eval (registry.register ⟨"Anna"⟩).isSome
 -- ANCHOR_END: dynamic_ids_demo
+
+-- ANCHOR: dynamic_ids_carry
+/-- Registering keeps every old member. -/
+theorem Registry.mem_register {r g : Registry}
+    {p q : PersonId} (h : r.register p = some g)
+    (hq : q ∈ r.people) : q ∈ g.people := by
+  unfold Registry.register at h
+  split at h
+  · contradiction
+  · cases h
+    exact List.mem_cons_of_mem _ hq
+
+/-- Carry a known person across a registration. -/
+def KnownPerson.carry {r g : Registry} {p : PersonId}
+    (h : r.register p = some g) (k : KnownPerson r) :
+    KnownPerson g :=
+  ⟨k.val, Registry.mem_register h k.property⟩
+-- ANCHOR_END: dynamic_ids_carry
 
 end Ch07
