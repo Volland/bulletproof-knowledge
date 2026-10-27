@@ -25,7 +25,7 @@ lake build Solutions
 lake exe agent      # Chapter 12 agent, replay mode (offline)
 ```
 
-`lake exe agent -- --live` calls the Anthropic API and needs `ANTHROPIC_API_KEY`.
+`lake exe agent --live` calls the Anthropic API and needs `ANTHROPIC_API_KEY`.
 
 ## Layout
 
