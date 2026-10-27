@@ -161,4 +161,57 @@ def lenaTalk : Talk :=
   (·.store.events.length)
 -- ANCHOR_END: lenaTalk
 
+/-! ## Growing the population at run time
+
+`Person` is closed: a sixth person is a new constructor and a
+rebuild. Production agents type identifiers instead, and pair
+each with a proof that it is registered. Chapter 12's
+`Agent/Registry.lean` puts the same idea into a store axiom. -/
+
+-- ANCHOR: dynamic_ids
+/-- An open identifier: any string, but its own type. -/
+structure PersonId where
+  val : String
+  deriving DecidableEq, Repr
+
+/-- The people the agent knows, each listed once. -/
+structure Registry where
+  people : List PersonId
+  nodup  : people.Nodup
+
+/-- A person known to `r`: an identifier and a proof
+    that `r` lists it. The type depends on the data. -/
+abbrev KnownPerson (r : Registry) :=
+  { p : PersonId // p ∈ r.people }
+
+/-- Smart constructor: adds a new identifier and
+    refuses one that is already registered. -/
+def Registry.register (r : Registry) (p : PersonId) :
+    Option Registry :=
+  if h : p ∈ r.people then none
+  else some ⟨p :: r.people, List.nodup_cons.mpr ⟨h, r.nodup⟩⟩
+
+/-- The only way to a `KnownPerson`: look it up. -/
+def Registry.find? (r : Registry) (p : PersonId) :
+    Option (KnownPerson r) :=
+  if h : p ∈ r.people then some ⟨p, h⟩ else none
+-- ANCHOR_END: dynamic_ids
+
+-- ANCHOR: dynamic_ids_demo
+def registry : Registry :=
+  ⟨[⟨"anna"⟩, ⟨"lena"⟩], by decide⟩
+
+def oksana : PersonId := ⟨"oksana"⟩
+
+/-- Registering Oksana: a function call on data. -/
+def grown : Registry :=
+  (registry.register oksana).getD registry
+
+/-- info: (false, true, true) -/
+#guard_msgs in
+#eval ((registry.find? oksana).isSome,
+       (grown.find? oksana).isSome,
+       (grown.register ⟨"anna"⟩).isNone)
+-- ANCHOR_END: dynamic_ids_demo
+
 end Ch07
