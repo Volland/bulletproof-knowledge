@@ -191,7 +191,7 @@ def Registry.register (r : Registry) (p : PersonId) :
   if h : p ∈ r.people then none
   else some ⟨p :: r.people, List.nodup_cons.mpr ⟨h, r.nodup⟩⟩
 
-/-- The only way to a `KnownPerson`: look it up. -/
+/-- Look a name up: a `KnownPerson` brings its proof. -/
 def Registry.find? (r : Registry) (p : PersonId) :
     Option (KnownPerson r) :=
   if h : p ∈ r.people then some ⟨p, h⟩ else none
